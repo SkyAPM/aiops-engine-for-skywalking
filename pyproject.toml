@@ -1,12 +1,12 @@
 [tool.poetry]
-name = "sw-aiops-engine"
+name = "aiops-engine-for-skywalking"
 version = "0.1.0"
 description = "An experimental alert engine for the SkyWalking observability data"
 license = "Apache-2.0"
 authors = ["Superskyyy <yihaochen@apache.org>"]
 readme = "README.md"
 homepage = "https://skywalking.apache.org/"
-repository = "https://github.com/superskyyy/sw-aiops-engine"
+repository = "https://github.com/superskyyy/aiops-engine-for-skywalking"
 keywords = ["skywalking", "alert", "observability", "aiops", "machine-learning"]
 classifiers = [
     "Development Status :: 1 - Planning",

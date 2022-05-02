@@ -1,0 +1,12 @@
+
+.idea/
+*.iml
+.DS_Store
+*~
+__pycache__
+build/
+dist/
+*.pyc
+**/*.egg-info/
+**/*venv*/
+.vscode/
