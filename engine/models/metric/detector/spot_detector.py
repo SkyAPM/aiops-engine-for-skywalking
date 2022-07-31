@@ -335,6 +335,9 @@ class SpotDetector(BaseDetector):
         else:
             score = 0.0
 
+
+        # Here, we can report the upper and lower bound of the scores.
+
         # self.thup.append(self.extreme_quantile["up"] + hist_mean)
         # self.thdown.append(self.extreme_quantile["down"] + hist_mean)
 

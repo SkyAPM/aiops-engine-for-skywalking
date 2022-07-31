@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from typing import Union
 from datetime import datetime
 from dateutil.parser import parse
-
+import numpy as np
 
 class BaseDetector(ABC):
     """Abstract class for Detector, supporting for customize detector."""
@@ -18,7 +18,7 @@ class BaseDetector(ABC):
 
         assert type(X) in [
             float,
-            int,
+            int
         ], "Please input X with float or int type."
         assert type(timestamp)
 
