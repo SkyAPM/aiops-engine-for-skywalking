@@ -29,6 +29,7 @@ class AlertManager:
                 # print('Alert End')
                 self.alert_cnt = 0
                 self.non_alert_cnt = 0
+                self.is_alerting = False
 
             elif self.is_alerting:
                 score = 1.0
