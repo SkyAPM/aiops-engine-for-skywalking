@@ -4,22 +4,20 @@ from datetime import datetime
 from dateutil.parser import parse
 import numpy as np
 
+
 class BaseDetector(ABC):
     """Abstract class for Detector, supporting for customize detector."""
 
-    def __init__(self):
+    def __init__(self, window_len: int = 200):
         """Initialization BaseDetector"""
-        self.data_type = "multivariate"
+        self.data_type = "univariate"
         self.index = -1
-        self.window_len = 100
+        self.window_len = window_len
 
     def _check(self, timestamp: str, X: Union[float, int]) -> bool:
         """Check whether the detector can handle the data."""
 
-        assert type(X) in [
-            float,
-            int
-        ], "Please input X with float or int type."
+        assert type(X) in [float, int], "Please input X with float or int type."
         assert type(timestamp)
 
         self.index += 1

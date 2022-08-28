@@ -1,5 +1,8 @@
 from collections import deque
 import numpy as np
+from math import ceil
+
+
 class AlertManager:
     def __init__(self, tolearance: int = 5, least_alert: int = 2) -> None:
         self.tolearance = tolearance
@@ -17,13 +20,16 @@ class AlertManager:
 
         if score == 1.0:
             if len(self.filter) > 4:
-                filters = {idx:abs(X-i) for idx, i in enumerate(self.filter)}
-                filters = dict(sorted(filters.items(), key= lambda x: x[1]))
 
-                refs = np.array(self.filter)[np.array(list(filters.keys())[:10])]
+                filters = sorted(list(self.filter), key=lambda x: abs(x - X))
+                refs = filters[: ceil(len(filters) / 2)]
                 refs_mean = np.mean(refs)
                 refs_std = np.std(refs)
-                res_score = abs(X - refs_mean) / refs_std if refs_std !=0 else abs(X - refs_mean)
+                res_score = (
+                    abs(X - refs_mean) / refs_std
+                    if refs_std != 0
+                    else abs(X - refs_mean)
+                )
                 if res_score < 2:
                     score = 0.5
             self.filter.append(X)

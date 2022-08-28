@@ -2,26 +2,25 @@ from ..base import BaseDetector
 import numpy as np
 from math import log
 from scipy.optimize import minimize
+from collections import deque
 
 np.seterr(divide="ignore", invalid="ignore")
 
 
 class SpotDetector(BaseDetector):
-    def __init__(self, window_len: int = 200, prob: float = 1e-4):
+    def __init__(self, prob: float = 1e-4, back_mean_len: int = 20, **kwargs):
         """Univariate Spot model.
-
         Args:
-            window_len (int, optional): Length of the window for reference. Defaults to 200.
             prob (float, optional): Threshold for probability, a small float value. Defaults to 1e-4.
+            back_mean_len (int, optional): Length of back mean, which can detrend the origin time series data. Defaults to 2.
+            window_len (int, optional): Length of the window for reference. Defaults to 200.
         """
-        super().__init__()
+        super().__init__(**kwargs)
 
-        self.data_type = "univariate"
         self.prob = prob
-        self.init_data = []
-        self.window_len = window_len
-        self._window_len = max(int(window_len / 100), 20)
-        self.init_length = window_len - self._window_len
+        self.init_data = deque(maxlen=self.window_len)
+        self.back_mean_len = back_mean_len
+        self.init_length = self.window_len - self.back_mean_len
         assert (
             self.init_length > 0
         ), "window_len is too small, default value is 200"
@@ -34,6 +33,7 @@ class SpotDetector(BaseDetector):
         self.peaks = dict.copy(nonedict)
         self.gamma = dict.copy(nonedict)
         self.sigma = dict.copy(nonedict)
+        self.normal_X = None
 
         # self.thup = []
         # self.thdown = []
@@ -59,7 +59,7 @@ class SpotDetector(BaseDetector):
                 1 - vs
             )
             jac_vs = np.divide(1, t, out=np.zeros_like(a), where=t != 0) * (
-                -vs + np.mean(1 / s**2)
+                -vs + np.mean(1 / s ** 2)
             )
             return us * jac_vs + vs * jac_us
 
@@ -75,13 +75,13 @@ class SpotDetector(BaseDetector):
         b = 2 * np.divide(
             (Ymean - Ym),
             (Ymean * Ym),
-            out=np.array(np.zeros_like(Ymean * Ym) - epsilon),
+            out=np.array((Ymean - Ym) / epsilon - epsilon),
             where=(Ymean * Ym) != 0,
         )
         c = 2 * np.divide(
             Ymean - Ym,
-            Ym**2,
-            out=np.array(np.zeros_like(Ym) + epsilon),
+            Ym ** 2,
+            out=np.array((Ymean - Ym) / epsilon + epsilon),
             where=Ym != 0,
         )
 
@@ -91,7 +91,7 @@ class SpotDetector(BaseDetector):
         left_zeros = self._rootsFinder(
             lambda t: w(self.peaks[side], t),
             lambda t: jac_w(self.peaks[side], t),
-            (d, e),
+            (d, e) if d < e else (e, d),
             n_points,
             "regular",
         )
@@ -99,7 +99,7 @@ class SpotDetector(BaseDetector):
         right_zeros = self._rootsFinder(
             lambda t: w(self.peaks[side], t),
             lambda t: jac_w(self.peaks[side], t),
-            (b, c),
+            (b, c) if b < c else (c, b),
             n_points,
             "regular",
         )
@@ -115,7 +115,9 @@ class SpotDetector(BaseDetector):
         # we look for better candidates
         for z in zeros:
             gamma = u(1 + z * self.peaks[side]) - 1
-            sigma = np.divide(gamma, z, out=np.zeros_like(gamma), where=z != 0)
+            sigma = np.divide(
+                gamma, z, out=np.array(gamma / epsilon), where=z != 0
+            )
             ll = self._log_likelihood(self.peaks[side], gamma, sigma)
             if ll > ll_best:
                 gamma_best = gamma
@@ -127,7 +129,6 @@ class SpotDetector(BaseDetector):
     def _rootsFinder(self, fun, jac, bounds, npoints, method):
         """
         Find possible roots of a scalar function
-
         Parameters
         ----------
         fun : function
@@ -140,7 +141,6 @@ class SpotDetector(BaseDetector):
             maximum number of roots to output
         method : str
             'regular' : regular sample of the search interval, 'random' : uniform (distribution) sample of the search interval
-
         Returns
         ----------
         numpy.array
@@ -161,7 +161,7 @@ class SpotDetector(BaseDetector):
             i = 0
             for x in X:
                 fx = f(x)
-                g = g + fx**2
+                g = g + fx ** 2
                 j[i] = 2 * fx * jac(x)
                 i = i + 1
             return g, j
@@ -181,7 +181,6 @@ class SpotDetector(BaseDetector):
     def _log_likelihood(self, Y, gamma, sigma):
         """
         Compute the log-likelihood for the Generalized Pareto Distribution (μ=0)
-
         Parameters
         ----------
         Y : numpy.array
@@ -190,7 +189,6 @@ class SpotDetector(BaseDetector):
             GPD index parameter
         sigma : float
             GPD scale parameter (>0)
-
         Returns
         ----------
         float
@@ -211,11 +209,8 @@ class SpotDetector(BaseDetector):
     def _quantile(self, side, gamma, sigma):
 
         if side == "up":
-            r = (
-                (self.init_length - self._window_len)
-                * self.prob
-                / self.num_threshold[side]
-            )
+            r = self.init_length * self.prob / self.num_threshold[side]
+
             if gamma != 0:
                 return self.init_threshold["up"] + (sigma / gamma) * (
                     pow(r, -gamma) - 1
@@ -223,11 +218,8 @@ class SpotDetector(BaseDetector):
             else:
                 return self.init_threshold["up"] - sigma * log(r)
         elif side == "down":
-            r = (
-                (self.init_length - self._window_len)
-                * self.prob
-                / self.num_threshold[side]
-            )
+            r = self.init_length * self.prob / self.num_threshold[side]
+
             if gamma != 0:
                 return self.init_threshold["down"] - (sigma / gamma) * (
                     pow(r, -gamma) - 1
@@ -238,31 +230,56 @@ class SpotDetector(BaseDetector):
             raise ValueError("The side is not right")
 
     def _back_mean(self):
+
+        init_data = list(self.init_data)
         M = []
-        w = sum(self.init_data[: self._window_len])
-        M.append(w / self._window_len)
-        for i in range(self._window_len, self.index + 1):
-            w = w - self.init_data[i - self._window_len] + self.init_data[i]
-            M.append(w / self._window_len)
+        w = sum(init_data[: self.back_mean_len])
+        M.append(
+            np.divide(
+                w,
+                self.back_mean_len,
+                out=np.array(0.0),
+                where=self.back_mean_len != 0,
+            )
+        )
+        for i in range(self.back_mean_len, self.index):
+            w = w - init_data[i - self.back_mean_len] + self.init_data[i]
+            M.append(
+                np.divide(
+                    w,
+                    self.back_mean_len,
+                    out=np.array(0.0),
+                    where=self.back_mean_len != 0,
+                )
+            )
 
         return np.array(M)
 
     def _init_drift(self, X: np.ndarray, verbose=False):
 
-        n_init = self.init_length
-
         M = self._back_mean()
 
-        T = self.init_data[self._window_len :] - M[:-1]
+        T = list(self.init_data)[self.back_mean_len :] - M[:-1]
         S = np.sort(T.tolist())
-        self.init_threshold["up"] = S[int(0.98 * n_init)]
-        self.init_threshold["down"] = S[int(0.02 * n_init)]
+        self.init_threshold["up"] = S[int(0.98 * self.init_length)]
+        self.init_threshold["down"] = S[int(0.02 * self.init_length)]
+
         self.peaks["up"] = (
-            T[T >= self.init_threshold["up"]] - self.init_threshold["up"]
+            T[T > self.init_threshold["up"]] - self.init_threshold["up"]
         )
+
+        if len(self.peaks["up"]) < 4:
+            self.peaks["up"] = np.append(
+                self.peaks["up"], np.repeat(0, 4 - len(self.peaks["up"]))
+            )
+
         self.peaks["down"] = (
-            self.init_threshold["down"] - T[T <= self.init_threshold["down"]]
+            self.init_threshold["down"] - T[T < self.init_threshold["down"]]
         )
+        if len(self.peaks["down"]) < 4:
+            self.peaks["down"] = np.append(
+                self.peaks["down"], np.repeat(0, 4 - len(self.peaks["down"])),
+            )
 
         self.num_threshold["up"] = self.peaks["up"].size
         self.num_threshold["down"] = self.peaks["down"].size
@@ -287,56 +304,59 @@ class SpotDetector(BaseDetector):
 
     def fit(self, X: np.ndarray):
 
-        self.init_data.append(float(X))
-
-        if self.index == self.window_len - 1:
+        if self.index == self.window_len:
             self._init_drift(X)
 
-        if self.index > self.window_len - 1:
-            hist_mean = np.mean(self.init_data[-self._window_len :])
+        if self.index >= self.window_len:
+            hist_mean = (
+                np.mean(list(self.init_data)[-self.back_mean_len :])
+                if self.back_mean_len > 0
+                else 0
+            )
 
-            normal_X = float(X) - hist_mean
+            self.normal_X = float(X) - hist_mean
 
-            if normal_X > self.init_threshold["up"]:
-                self._update_one_side("up", normal_X)
+            if self.normal_X > self.init_threshold["up"]:
+                self._update_one_side("up", self.normal_X)
 
-            elif normal_X < self.init_threshold["down"]:
-                self._update_one_side("down", normal_X)
+            elif self.normal_X < self.init_threshold["down"]:
+                self._update_one_side("down", self.normal_X)
 
-            self.init_data = self.init_data[-self._window_len :]
+        self.init_data.append(float(X))
 
         return self
 
     def score(self, X: np.ndarray) -> float:
 
-        hist_mean = np.mean(self.init_data[-self._window_len :])
-
-        normal_X = float(X) - hist_mean
-
         if (
-            normal_X > self.extreme_quantile["up"]
-            or normal_X < self.extreme_quantile["down"]
+            self.normal_X > self.extreme_quantile["up"]
+            or self.normal_X < self.extreme_quantile["down"]
         ):
             score = 1.0
 
-        elif normal_X > self.init_threshold["up"]:
+        elif self.normal_X > self.init_threshold["up"]:
             side = "up"
-            score = abs(
-                float(self.init_threshold[side] - normal_X)
-                / (self.extreme_quantile[side] - self.init_threshold[side])
+            score = np.divide(
+                self.normal_X - self.init_threshold[side],
+                (self.extreme_quantile[side] - self.init_threshold[side]),
+                np.array(0.5),
+                where=(
+                    self.extreme_quantile[side] - self.init_threshold[side] != 0
+                ),
             )
 
-        elif normal_X < self.init_threshold["down"]:
+        elif self.normal_X < self.init_threshold["down"]:
             side = "down"
-            score = abs(
-                float(self.init_threshold[side] - normal_X)
-                / (self.extreme_quantile[side] - self.init_threshold[side])
+            score = np.divide(
+                self.init_threshold[side] - self.normal_X,
+                (self.init_threshold[side] - self.extreme_quantile[side]),
+                np.array(0.5),
+                where=(
+                    self.init_threshold[side] - self.extreme_quantile[side] != 0
+                ),
             )
         else:
             score = 0.0
-
-
-        # Here, we can report the upper and lower bound of the scores.
 
         # self.thup.append(self.extreme_quantile["up"] + hist_mean)
         # self.thdown.append(self.extreme_quantile["down"] + hist_mean)
