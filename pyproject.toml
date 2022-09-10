@@ -15,36 +15,49 @@
 [tool.poetry]
 name = "aiops-engine-for-skywalking"
 version = "0.1.0"
-description = "An experimental alert engine for the SkyWalking observability data"
+description = "An AIOps engine for the SkyWalking observability data"
 license = "Apache-2.0"
 authors = ["Superskyyy <yihaochen@apache.org>"]
 readme = "README.md"
 homepage = "https://skywalking.apache.org/"
-repository = "https://github.com/superskyyy/aiops-engine-for-skywalking"
+repository = "https://github.com/SkyAPM/aiops-engine-for-skywalking"
 keywords = ["skywalking", "alert", "observability", "aiops", "machine-learning"]
 classifiers = [
     "Development Status :: 1 - Planning",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
     "Topic :: System :: Monitoring",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "License :: OSI Approved :: Apache Software License",
 ]
 
+[tool.poetry.urls]
+"Issues Tracker" = "https://github.com/SkyAPM/aiops-engine-for-skywalking/issues"
+"Documentation" = "TBD"
+
+[tool.poetry.scripts]
+# entry point for the CLI
+
 [tool.poetry.dependencies]
-python = ">=3.8,<3.10" # we don't do <3.8 due to scipy， we don't do 3.10 due to ray
-gql = {extras = ["all"], version = "^3.2.0"} # graphql client
-PyYAML = "^6.0"  # configuration parser
-# below two dependencies are for distributed data processing
-#modin = {extras = ["ray"], version = "^0.14.0"} # we don't need this for now.
-#ray = "^1.12.1" # same as above
-# data transformation
-vaex = "^4.9.1"
+python = ">=3.8,<3.11"
+gql = { extras = ["all"], version = "^3.2.0" } # graphql client
 scikit-learn = "^1.0.2"
 scipy = "^1.9.0"
 numpy = "^1.23.1"
-
+pandas = "^1.4.4"
+jupyter = "^1.0.0"
 
 [tool.poetry.dev-dependencies]
 PySnooper = "^1.1.1"
-# LINTERS
+# TESTING
+tox = "^3.25.1"
+tqdm = "^4.64.0"
+yappi = "^1.3.5"
+
+[tool.poetry.group.linters]
+[tool.poetry.group.linters.dependencies]
+# used by CI and dev check
+# poetry install --only linters
 flake8 = "^4.0.1"
 unify = "^0.5"
 flynt = "^0.76"
@@ -57,7 +70,7 @@ flake8-docstrings = "^1.6.0"
 flake8-bugbear = "^22.4.25"
 flake8-comprehensions = "^3.8.0"
 flake8-2020 = "^1.6.1"
-jupyter = "^1.0.0"
+isort = "^5.10.1"
 
 
 [build-system]

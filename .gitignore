@@ -23,3 +23,5 @@ dist/
 **/*.egg-info/
 **/*venv*/
 .vscode/
+engine_protocol/
+assets/datasets
