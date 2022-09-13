@@ -28,5 +28,6 @@ header:
     - '**/*.ipynb'
     - '**/*.lock'
     - '**/*.csv'
+    - '**/*.log'
 
   comment: on-failure
