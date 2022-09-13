@@ -187,7 +187,7 @@ class SpotDetector(BaseDetector):
             step = (bounds[1] - bounds[0]) / (npoints + 1)
             try:
                 x_sampled = np.arange(bounds[0] + step, bounds[1], step)
-            except ArithmeticError:
+            except BaseException:
                 x_sampled = np.random.uniform(bounds[0], bounds[1], npoints)
         elif method == 'random':
             x_sampled = np.random.uniform(bounds[0], bounds[1], npoints)

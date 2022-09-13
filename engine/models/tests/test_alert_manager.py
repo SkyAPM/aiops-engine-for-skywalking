@@ -14,9 +14,8 @@
 
 
 import sys
-sys.path.append('../../')
 from engine.models.metric.utils import AlertManager
-
+sys.path.append('../../')
 
 def test_alert():
 
