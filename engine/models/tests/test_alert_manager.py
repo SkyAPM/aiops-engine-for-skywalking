@@ -12,6 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .detector import BaseDetector
 
-__all__ = ['BaseDetector']
+import sys
+sys.path.append('../../')
+from engine.models.metric.utils import AlertManager
+
+
+def test_alert():
+
+    manager = AlertManager(tolearance=5, least_alert=2)
+
+    for idx, i in enumerate([0, 0, 0, 1, 1, 0, 1, 0, 0, 0, 0, 0, 1, 1, 0, 1]):
+        score = manager.get_alert(score=i, timestamp=str(idx), data=i)
+        print(score)

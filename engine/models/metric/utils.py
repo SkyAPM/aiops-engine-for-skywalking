@@ -1,6 +1,19 @@
-from collections import deque
-import numpy as np
-from math import ceil
+# Copyright 2022 SkyAPM org
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+
+from typing import Union
 
 
 class AlertManager:
@@ -10,29 +23,13 @@ class AlertManager:
         self.alert_cnt = 0
         self.non_alert_cnt = 0
         self.is_alerting = False
-        self.filter = deque(maxlen=20)
 
-    def get_alert(self, timestamp, X, score: float):
+    def get_alert(self, timestamp: str, data: Union[float, int], score: float):
         if score is None:
             return None
-        assert type(score) is float or type(score) is int, "Score must be float"
-        assert 0 <= score <= 1, "Score must be between 0 and 1"
+        assert type(score) is float or type(score) is int, 'Score must be float'
+        assert 0 <= score <= 1, 'Score must be between 0 and 1'
 
-        if score == 1.0:
-            if len(self.filter) > 4:
-
-                filters = sorted(list(self.filter), key=lambda x: abs(x - X))
-                refs = filters[: ceil(len(filters) / 2)]
-                refs_mean = np.mean(refs)
-                refs_std = np.std(refs)
-                res_score = (
-                    abs(X - refs_mean) / refs_std
-                    if refs_std != 0
-                    else abs(X - refs_mean)
-                )
-                if res_score < 2:
-                    score = 0.5
-            self.filter.append(X)
 
         if score == 1.0:
             self.alert_cnt += 1
