@@ -17,6 +17,7 @@ import sys
 from engine.models.metric.utils import AlertManager
 sys.path.append('../../')
 
+
 def test_alert():
 
     manager = AlertManager(tolearance=5, least_alert=2)
