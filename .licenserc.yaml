@@ -29,5 +29,6 @@ header:
     - '**/*.lock'
     - '**/*.csv'
     - '**/*.log'
+    - 'experiments/log/clustering/drain3/*'
 
   comment: on-failure
