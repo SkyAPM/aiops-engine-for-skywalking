@@ -10,11 +10,11 @@ from typing import Optional, List, NamedTuple
 import jsonpickle
 from cachetools import LRUCache, cachedmethod, Cache
 
-from drain3.drain import Drain, LogCluster
-from drain3.masking import LogMasker
-from drain3.persistence_handler import PersistenceHandler
-from drain3.simple_profiler import SimpleProfiler, NullProfiler, Profiler
-from drain3.template_miner_config import TemplateMinerConfig
+from drain_parser.drain import Drain, LogCluster
+from drain_parser.masking import LogMasker
+from drain_parser.persistence_handler import PersistenceHandler
+from drain_parser.simple_profiler import Profiler, NullProfiler, SimpleProfiler
+from drain_parser.template_miner_config import TemplateMinerConfig
 
 logger = logging.getLogger(__name__)
 
@@ -22,11 +22,10 @@ config_filename = 'drain3.ini'
 
 ExtractedParameter = NamedTuple('ExtractedParameter', [('value', str), ('mask_name', str)])
 
-
+# A new part is added to store logs and corresponding clusters
 class LogCache(LRUCache):
     def __missing__(self, key):
         return None
-
     def get(self, key):
         """
         Returns the value of the item with the specified key without updating
@@ -39,14 +38,14 @@ class TemplateMiner:
 
     def __init__(self,
                  persistence_handler: PersistenceHandler = None,
-                 config: TemplateMinerConfig = None):
+                 config: TemplateMinerConfig = None, config_filename=None):
         """
         Wrapper for Drain with persistence and masking support
 
         :param persistence_handler: The type of persistence to use. When None, no persistence is applied.
         :param config: Configuration object. When none, configuration is loaded from default .ini file (if exist)
         """
-        logger.info('Starting Drain3 template miner')
+        # logger.info('Starting Drain3 template miner')
 
         if config is None:
             logger.info(f'Loading configuration from {config_filename}')
@@ -132,16 +131,6 @@ class TemplateMiner:
 
         return None
 
-    def get_mask_content(self, log_message: str):
-        """
-        Mask the parameters to get the mask content
-        @param log_message: log
-        @return:
-        """
-        self.profiler.start_section('mask')
-        mask_content = self.masker.mask(log_message)
-        self.profiler.end_section('mask')
-        return mask_content
 
     def get_cluster(self, mask_content: str, log_service: str) -> dict:
         """

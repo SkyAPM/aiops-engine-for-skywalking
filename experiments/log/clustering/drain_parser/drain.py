@@ -6,7 +6,7 @@ from typing import List, Dict, Sequence
 
 from cachetools import LRUCache, Cache
 
-from drain3.simple_profiler import NullProfiler
+from drain_parser.simple_profiler import NullProfiler
 
 
 class LogCluster:
@@ -309,8 +309,8 @@ class Drain:
         return content_tokens
 
     def add_log_message(self, content: str, service: str):
-        content_tokens = self.get_content_as_tokens(content)  # 把一个message 的下划线去掉斌切根据空格分割字符串
-        # choose the root_node of the tree based on the service
+        content_tokens = self.get_content_as_tokens(content)
+        # new part: choose the root_node of the tree based on the service
         if service in self.root_nodes.keys():
             root_node = self.root_nodes[service]
         else:

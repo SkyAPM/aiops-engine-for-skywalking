@@ -2,7 +2,7 @@
 
 import redis
 
-from drain3.persistence_handler import PersistenceHandler
+from drain_parser.persistence_handler import PersistenceHandler
 
 
 class RedisPersistence(PersistenceHandler):

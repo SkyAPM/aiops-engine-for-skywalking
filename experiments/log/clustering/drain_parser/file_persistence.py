@@ -3,7 +3,7 @@
 import os
 import pathlib
 
-from drain3.persistence_handler import PersistenceHandler
+from drain_parser.persistence_handler import PersistenceHandler
 
 
 class FilePersistence(PersistenceHandler):

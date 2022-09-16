@@ -1,6 +1,5 @@
 # SPDX-License-Identifier: MIT
-
-from drain3.persistence_handler import PersistenceHandler
+from drain_parser.persistence_handler import PersistenceHandler
 
 
 class MemoryBufferPersistence(PersistenceHandler):

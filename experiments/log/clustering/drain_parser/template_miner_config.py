@@ -5,7 +5,7 @@ import configparser
 import json
 import logging
 
-from drain3.masking import MaskingInstruction
+from drain_parser.masking import MaskingInstruction
 
 logger = logging.getLogger(__name__)
 
