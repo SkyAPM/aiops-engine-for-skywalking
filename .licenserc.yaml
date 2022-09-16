@@ -30,5 +30,6 @@ header:
     - '**/*.csv'
     - '**/*.log'
     - 'experiments/log/clustering/drain3/*'
+    - '**/*.ini'
 
   comment: on-failure
