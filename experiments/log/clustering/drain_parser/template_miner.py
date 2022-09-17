@@ -23,19 +23,16 @@ config_filename = 'drain3.ini'
 ExtractedParameter = NamedTuple('ExtractedParameter', [('value', str), ('mask_name', str)])
 
 # A new part is added to store logs and corresponding clusters
-class LogCache(LRUCache):
+class LogCache(LRUCache):            # noqa
     def __missing__(self, key):
         return None
-    def get(self, key):
+    def get(self, key):      # noqa
         """
         Returns the value of the item with the specified key without updating
         the cache eviction algorithm.
         """
         return Cache.__getitem__(self, key)
-
-
-class TemplateMiner:
-
+class TemplateMiner:            # noqa
     def __init__(self,
                  persistence_handler: PersistenceHandler = None,
                  config: TemplateMinerConfig = None, config_filename=None):
@@ -46,7 +43,6 @@ class TemplateMiner:
         :param config: Configuration object. When none, configuration is loaded from default .ini file (if exist)
         """
         # logger.info('Starting Drain3 template miner')
-
         if config is None:
             logger.info(f'Loading configuration from {config_filename}')
             config = TemplateMinerConfig()
