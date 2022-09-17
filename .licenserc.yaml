@@ -29,5 +29,7 @@ header:
     - '**/*.lock'
     - '**/*.csv'
     - '**/*.log'
+    - 'experiments/log/clustering/drain_parser/*'
+    - '**/*.ini'
 
   comment: on-failure
