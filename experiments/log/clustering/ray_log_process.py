@@ -75,8 +75,8 @@ class RayConsumer(object):
                 if k == 'log_compressed':
                     try:
                         v = zlib.decompress(log[key]).decode('utf-8')
-                    except BaseException:
-                        zlib.error
+                    except zlib.error:
+                        pass
                 else:
                     v = str(log[key], 'utf-8')
                 log_body[k] = v
