@@ -12,18 +12,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-.idea/
-*.iml
-.DS_Store
-*~
-__pycache__
-build/
-dist/
-*.pyc
-**/*.egg-info/
-**/*venv*/
-.vscode/
-engine_protocol/
-assets/datasets
-# Ignore dynaconf secret files
-.secrets.*
+[engine]
+[engine.aiops.log]
+# Enable the log analysis feature; default is true
+enable = true
+algorithm = 'drain' # drain is the only option for now
+

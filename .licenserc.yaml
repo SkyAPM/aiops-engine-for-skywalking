@@ -28,6 +28,7 @@ header:
     - '**/*.ipynb'
     - '**/*.lock'
     - '**/*.csv'
+    - '**/*.txt'
     - '**/*.log'
     - 'experiments/log/clustering/drain_parser/*'
     - '**/*.ini'

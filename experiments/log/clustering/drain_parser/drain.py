@@ -6,7 +6,7 @@ from typing import List, Dict, Sequence
 
 from cachetools import LRUCache, Cache
 
-from drain_parser.simple_profiler import NullProfiler
+from simple_profiler import NullProfiler
 
 
 class LogCluster:

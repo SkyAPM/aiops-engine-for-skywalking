@@ -49,6 +49,8 @@ jupyter = "^1.0.0"
 ray = "^2.0.0"
 redis = { extras = ["hiredis"], version = "^4.3.4" }
 pyzstd = "^0.15.3"
+dynaconf = "^3.1.9"
+cachetools = "^5.2.0"
 
 [tool.poetry.dev-dependencies]
 PySnooper = "^1.1.1"
