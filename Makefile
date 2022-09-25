@@ -24,14 +24,14 @@ endif
 $(VENV):
 	python3 -m venv $(VENV_DIR)
 	poetry run python -m pip install --upgrade pip
+	poetry install --sync
 
 all: gen get-dataset prune-dataset lint license clean
 
 .PHONY: all
 
 gen:
-	poetry run python -m pip install grpcio-tools
-	poetry run python -m tools.grpc_code_gen
+	poetry run python -m tools.grpc_gen
 
 #argument indicates a dataset name defined in sample_data_manager.py
 get-dataset:
@@ -53,11 +53,5 @@ lint-fix: lint-setup
 	$(VENV)/unify -r --in-place .
 	$(VENV)/flynt -tc -v .
 
-# todo make this work on windows
 clean:
-	find . -name "*.egg-info" -exec rm -r {} +
-	find . -name "dist" -exec rm -r {} +
-	find . -name "build" -exec rm -r {} +
-	find . -name "__pycache__" -exec rm -r {} +
-	find . -name ".pytest_cache" -exec rm -r {} +
-	find . -name "*.pyc" -exec rm -r {} +
+	poetry run python -m tools.cleaner

@@ -51,6 +51,7 @@ redis = { extras = ["hiredis"], version = "^4.3.4" }
 pyzstd = "^0.15.3"
 dynaconf = "^3.1.9"
 cachetools = "^5.2.0"
+grpcio-tools = ">=1.42.0"
 
 [tool.poetry.dev-dependencies]
 PySnooper = "^1.1.1"
