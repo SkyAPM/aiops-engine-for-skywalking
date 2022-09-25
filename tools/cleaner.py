@@ -23,7 +23,7 @@ def find_and_clean(folders_to_remove: list, root='.') -> None:
     :return:
     """
     exclude: set = {'.venv'}
-    for path, dirs, files in os.walk(root):
+    for path, dirs, _ in os.walk(root):
         dirs[:] = [d for d in dirs if d not in exclude]
         for folder in folders_to_remove:
             if any(folder in d for d in dirs):
