@@ -25,5 +25,6 @@ dist/
 .vscode/
 engine_protocol/
 assets/datasets
+**/generated/
 # Ignore dynaconf secret files
 .secrets.*

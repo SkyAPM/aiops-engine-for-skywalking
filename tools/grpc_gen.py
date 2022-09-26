@@ -58,8 +58,7 @@ def codegen(proto_location: str):
             code = file.read()
             file.seek(0)
             replaced_inplace = re.sub(r'(import .+_pb2.*)', 'from . \\1', code)
-            replaced_nested = re.sub(r'from (.+) (import .+_pb2.*)', 'from ..\\1 \\2', replaced_inplace)
-            file.write(replaced_nested)
+            file.write(replaced_inplace)
             file.truncate()
 
 

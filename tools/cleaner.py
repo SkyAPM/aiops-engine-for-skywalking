@@ -32,5 +32,6 @@ def find_and_clean(folders_to_remove: list, root='.') -> None:
 
 
 if __name__ == '__main__':
-    find_and_clean(folders_to_remove=['__pycache__', 'generated', 'build', 'dist', 'egg-info', 'pytest_cache', '.pyc'],
+    find_and_clean(folders_to_remove=['__pycache__', 'generated', 'build', 'dist',
+                                      'egg-info', 'pytest_cache', '.pyc'],
                    root='.')
