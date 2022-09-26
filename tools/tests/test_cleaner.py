@@ -11,7 +11,23 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
+import os
 
-from .spot_detector import SpotDetector
+from tools import cleaner
 
-__all__ = ['SpotDetector']
+
+# import pytest
+
+
+def generate_garbage():
+    print(os.getcwd())
+    os.makedirs("abc.pyc", exist_ok=True)
+
+
+def test_find_and_clean():
+    cleaner.find_and_clean(folders_to_remove=['abc.pyc'], root='.')
+
+
+if __name__ == '__main__':
+    generate_garbage()
+    test_find_and_clean()

@@ -1,0 +1,74 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+
+// client side is the SkyWalking side,
+// or wherever ships out logs to AIOps engine.
+service LogExportService {
+    // Client side streaming log records
+    // Accepts a stream of LogData to ingest,
+    // returning a ExportSummary when streaming is completed.
+    rpc StreamLogExport (stream LogData) returns (ExportResponse) {
+    }
+    // Log target subscription
+    // This is also client side, client asks AIOps engine for a subscription list
+    rpc AskSubscription (SubscriptionRequest) returns (SubscriptionResponse) {
+    }
+}
+
+message LogDataBody {
+    // Required: log data body
+    // Note: for algorithm analysis
+    string content = 1;
+    // TODO: structured json log
+}
+
+message LogData {
+    // Required: timestamp of the log
+    // Note: Though optional, it is highly recommended if you enable analysis of log trend over time.
+    // If unset, the timestamp will be the time when the log is received by AIOps engine.
+    int64 timestamp = 1;
+
+    // Required: UUID of the log
+    // Note: to identify the log and send back to data source
+    string entityID = 2;
+
+    // Required: actual content of the log message content
+    // Note: can be in raw form or logs after some initial cleaning,
+    // such as removing timestamp headers etc.
+    LogDataBody body = 3;
+
+    // SkyWalking Specific
+    // Optional: quick identification of errors if we already know
+    bool isError = 4;
+    // Required: service name/ID that the log belongs to
+    string service = 5;
+    // Required: service instance name/ID that the log belongs to
+    string serviceInstance = 6;
+    // Required: endpoint name/ID that the log belongs to
+    string endpoint = 7;
+    // Optional: The layer of the service and service instance.
+    // If absent, the OAP would set `layer`=`ID: 2, NAME: general`
+    string layer = 8;
+
+    // TODO Traces correlation for future
+}
+
+message ExportResponse{
+    // number of logs received
+    // Purpose: [DEBUG] monitoring the multiprocessing grpc server behavior
+    // TODO: Change to Python agent meter report
+    optional int64 receivedCount = 1;
+}
+
+message SubscriptionRequest{
+    // Void
+}
+
+message SubscriptionResponse{
+    // by default we do full export
+    // optionally we can filter based on services
+    repeated string serviceID = 1;
+}
+
+

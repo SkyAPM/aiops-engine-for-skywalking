@@ -14,15 +14,11 @@
 
 import logging
 import sys
-
 import zlib
-
 from os.path import dirname
 
 import ray
-
 import redis
-
 from redis import Redis
 
 from drain_parser.masking import LogMasker
@@ -42,7 +38,6 @@ log_masker = LogMasker(config.masking_instructions, config.mask_prefix, config.m
 template_miner = TemplateMiner(config=config)
 
 
-
 @ray.remote(num_cpus=0.05)
 class RayConsumer(object):
     def __init__(self, redis_conn):
@@ -53,6 +48,7 @@ class RayConsumer(object):
         put cluster message to redis
         """
         # connect to redis and create consumer group
+        self.run = None
         self.r = Redis(redis_conn['REDIS_HOSTNAME'], redis_conn['REDIS_PORT'],
                        retry_on_timeout=True, username=redis_conn['username'],
                        password=redis_conn['password'])
