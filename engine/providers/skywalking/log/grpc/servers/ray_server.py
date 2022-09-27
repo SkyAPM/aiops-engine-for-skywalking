@@ -54,7 +54,7 @@ class GRPCIngestorActor:
         """Start a server in a subprocess."""
         _LOGGER.info('Starting new server.')
         options = (('grpc.so_reuseport', 1),)
-        server = grpc.aio.server()
+        server = grpc.aio.server(options=options)
         redis_conn = await aioredis.from_url(
             f'redis://{self.redis_info["REDIS_HOSTNAME"]}:{self.redis_info["REDIS_PORT"]}',
             retry_on_timeout=True, username=self.redis_info['username'],

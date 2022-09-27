@@ -10,11 +10,11 @@ from typing import Optional, List, NamedTuple
 import jsonpickle
 from cachetools import LRUCache, cachedmethod, Cache
 
-from drain_parser.drain import Drain, LogCluster
-from drain_parser.masking import LogMasker
-from drain_parser.persistence_handler import PersistenceHandler
-from drain_parser.simple_profiler import Profiler, NullProfiler, SimpleProfiler
-from drain_parser.template_miner_config import TemplateMinerConfig
+from drain import Drain, LogCluster
+from masking import LogMasker
+from persistence_handler import PersistenceHandler
+from simple_profiler import Profiler, NullProfiler, SimpleProfiler
+from template_miner_config import TemplateMinerConfig
 
 logger = logging.getLogger(__name__)
 
@@ -22,8 +22,9 @@ config_filename = 'drain3.ini'
 
 ExtractedParameter = NamedTuple('ExtractedParameter', [('value', str), ('mask_name', str)])
 
+
 # A new part is added to store logs and corresponding clusters
-class LogCache(LRUCache):            # noqa
+class LogCache(LRUCache):  # noqa
     def __missing__(self, key):
         return None
     def get(self, key):      # noqa

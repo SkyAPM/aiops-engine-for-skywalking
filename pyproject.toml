@@ -54,6 +54,7 @@ cachetools = "^5.2.0"
 grpcio-tools = ">=1.43.0"
 grpcio = "1.43.0"  # widen this range when ray is updated https://github.com/ray-project/ray/pull/28623
 # protobuf = "3.15.3"
+jsonpickle = "^2.2.0"
 
 [tool.poetry.dev-dependencies]
 PySnooper = "^1.1.1"
