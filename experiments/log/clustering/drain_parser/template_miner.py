@@ -10,11 +10,11 @@ from typing import Optional, List, NamedTuple
 import jsonpickle
 from cachetools import LRUCache, cachedmethod, Cache
 
-from drain import Drain, LogCluster
-from masking import LogMasker
-from persistence_handler import PersistenceHandler
-from simple_profiler import Profiler, NullProfiler, SimpleProfiler
-from template_miner_config import TemplateMinerConfig
+from experiments.log.clustering.drain_parser.drain import Drain, LogCluster
+from experiments.log.clustering.drain_parser.masking import LogMasker
+from experiments.log.clustering.drain_parser.persistence_handler import PersistenceHandler
+from experiments.log.clustering.drain_parser.simple_profiler import Profiler, NullProfiler, SimpleProfiler
+from experiments.log.clustering.drain_parser.template_miner_config import TemplateMinerConfig
 
 logger = logging.getLogger(__name__)
 
@@ -27,13 +27,16 @@ ExtractedParameter = NamedTuple('ExtractedParameter', [('value', str), ('mask_na
 class LogCache(LRUCache):  # noqa
     def __missing__(self, key):
         return None
-    def get(self, key):      # noqa
+
+    def get(self, key):  # noqa
         """
         Returns the value of the item with the specified key without updating
         the cache eviction algorithm.
         """
         return Cache.__getitem__(self, key)
-class TemplateMiner:            # noqa
+
+
+class TemplateMiner:  # noqa
     def __init__(self,
                  persistence_handler: PersistenceHandler = None,
                  config: TemplateMinerConfig = None, config_filename=None):
@@ -65,7 +68,6 @@ class TemplateMiner:            # noqa
             max_clusters=self.config.drain_max_clusters,
             max_logs=self.config.drain_max_logs,
             extra_delimiters=self.config.drain_extra_delimiters,
-            profiler=self.profiler,
             param_str=param_str,
             parametrize_numeric_tokens=self.config.parametrize_numeric_tokens
         )
@@ -106,7 +108,8 @@ class TemplateMiner:            # noqa
         self.drain.clusters_counter = loaded_drain.clusters_counter
         self.drain.root_nodes = loaded_drain.root_nodes
 
-        logger.info(f'Restored {len(loaded_drain.clusters)} clusters built from {loaded_drain.get_total_cluster_size()} messages')
+        logger.info(
+            f'Restored {len(loaded_drain.clusters)} clusters built from {loaded_drain.get_total_cluster_size()} messages')
 
     def save_state(self, snapshot_reason):
         state = jsonpickle.dumps(self.drain, keys=True).encode('utf-8')
@@ -127,7 +130,6 @@ class TemplateMiner:            # noqa
             return 'periodic'
 
         return None
-
 
     def get_cluster(self, mask_content: str, log_service: str) -> dict:
         """
@@ -332,9 +334,9 @@ class TemplateMiner:            # noqa
                         param_group_name = get_next_param_name()
 
                         def replace_captured_param_name(param_pattern):
-                            _search_str = param_pattern.format(group_name)      # noqa
-                            _replace_str = param_pattern.format(param_group_name)   # noqa
-                            return pattern.replace(_search_str, _replace_str)      # noqa
+                            _search_str = param_pattern.format(group_name)  # noqa
+                            _replace_str = param_pattern.format(param_group_name)  # noqa
+                            return pattern.replace(_search_str, _replace_str)  # noqa
 
                         pattern = replace_captured_param_name('(?P={}')
                         pattern = replace_captured_param_name('(?P<{}>')

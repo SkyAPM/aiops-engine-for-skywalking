@@ -14,6 +14,7 @@
 
 import logging
 import sys
+import time
 import zlib
 from os.path import dirname
 
@@ -40,7 +41,7 @@ template_miner = TemplateMiner(config=config)
 
 @ray.remote(num_cpus=0.05)
 class RayConsumer(object):
-    def __init__(self, redis_conn):
+    def __init__(self, i, redis_conn, stream_name: str):
         """
         The whole process of log outlier detection
         Read log message from Redis in the form of stream
@@ -56,38 +57,102 @@ class RayConsumer(object):
             self.r.xgroup_create('test', 'ray_group3', id='0')
         except redis.exceptions.ResponseError:
             pass
+        self.consumer_id = i
+        self.group_name = 'ray_group3'
+        self.stream_name = stream_name
 
     def start(self):
         self.run = True
-
+        processed_counter = 0  # this records the logs processed, TODO fail safe for workers crash and redis crash
+        time_readgroup_total = 0
+        time_ack_total = 0
+        time_delete_total = 0
         while self.run:
-            # get log message from redis
-            message = self.r.xreadgroup('consumer_group_name', 'consumer', {'stream_name': '>'}, count=1)
-            stream, entry = message[0]
-            log_id, log = entry[0]
-            log_body = {}
-            for key in log.keys():
-                k = str(key, 'utf-8')
-                if k == 'log_compressed':
-                    try:
-                        v = zlib.decompress(log[key]).decode('utf-8')
-                    except zlib.error:
-                        pass
-                else:
-                    v = str(log[key], 'utf-8')
-                log_body[k] = v
-            self.r.xack('stream_name', 'consumer_group_name', log_id)
-            self.r.xdel('stream_name', log_id)
-            # preprocess to log
-            log_message = log_body['log_compressed']
-            log_service = log_body['service']
-            mask = log_masker.mask(log_message)
-            # clustering
-            result = template_miner.get_cluster(mask, log_service)
-            # put template message to redis
-            producer = ray.get_actor('producer')
-            # Final result are put into redis
-            ray.get(producer.put_template.remote(result, log_id, log_service))
+            try:
+                time_readgroup_start = time.time()
+                msg = self.r.xreadgroup(
+                    groupname=self.group_name,
+                    consumername=f'consumer-{self.consumer_id}',
+                    streams={'test': '>'},
+                    count=1000,  # if blocked, count will not take effect as always be 1
+                    block=86_400_000,  # block for 1 day before it can timeout and shutdown
+                )
+                time_readgroup_end = time.time()
+                time_readgroup_total += time_readgroup_end - time_readgroup_start
+            except redis.exceptions.TimeoutError as e:
+                print('timeout')
+                return
+            if not msg:
+                # for testing only, we should wait indefinitely if there is no message in production
+                print(f'time_readgroup_total: {time_readgroup_total} seconds')
+                print(f'time_ack_total {time_ack_total} seconds')
+                print(f'time_delete_total {time_delete_total} seconds')
+                # return
+
+            # also update the id of current log, to prevent crash of consumer group
+            # print(msg)
+            try:
+                # for single
+                # [[stream, [[entry_id, log_entry]]]] = msg if msg != [] else [[None], [[None, None]]]
+
+                # for micro batch
+                stream, entries = msg[0]
+                processed_counter += len(entries)  # not always count, when blocked it will be +1
+
+                # print(f'got {len(entries)} entries from stream {stream}')
+                # print(f'data from stream {stream} entry_id {entry_id} \n log_entry {log_entry}')
+            except Exception as e:
+                print(e)
+                print(msg)
+                continue
+            pipeline = self.r.pipeline()
+            for log_entry_id, log_entry in entries:
+                try:
+                    log_body = zlib.decompress(log_entry[b'log_compressed']).decode('utf-8')
+                    # log_body = log_entry[b'log_compressed'].decode('utf-8')
+                except zlib.error as e:
+                    print(log_entry)
+                    continue
+                try:
+                    # masked = ray.get(get_mask.remote(log_body)) # todo this is slower than directly masking
+                    mask_content = log_masker.mask(log_body)
+                    # print(mask_content)
+                    service = 'testoap'
+                    # ref = drain_remote.learn_one.remote(masked_content=mask_content, service=service)
+                    result = template_miner.get_cluster(mask_content, service)
+                    # put template message to redis
+                    template_id = result['cluster_id']
+                    change_type = result['change_type']
+                    template = result['template_mined']
+                    service_template_id = service + str(template_id)
+                    id_log_template = {'service_template_id': service_template_id, 'log_id': log_entry_id}
+                    pipeline.xadd('log_template', id_log_template)
+                    # self.r.xadd('log_template', id_log_template)
+
+                    if change_type == 'cluster_template_changed' or change_type == 'cluster_created':
+                        pipeline.hset('change_template', service_template_id, template)
+
+                    # producer = ray.get_actor('producer')
+                    # Final result are put into redis
+                    # ray.get(producer.put_template.remote(result, log_entry_id, service))
+                    # after success masking, we should ack the  then delete it from the stream
+                except Exception as e:
+                    print(log_body)
+                    print(e)
+            pipeline.execute()
+            log_ids_to_respond = [lid for lid, entry in entries]
+            print(log_ids_to_respond)
+            try:
+                time_ack_start = time.time()
+                self.r.xack('test', self.group_name, *log_ids_to_respond)
+                time_ack_end = time.time() - time_ack_start
+                time_ack_total += time_ack_end
+                time_delete_start = time.time()
+                self.r.xdel('test', *log_ids_to_respond)  # xtrim is dangerous, need evaluation
+                time_delete_end = time.time() - time_delete_start
+                time_delete_total += time_delete_end
+            except Exception as e:
+                print('failed to ack', e)
 
     def stop(self):
         self.run = False
@@ -123,13 +188,10 @@ class RayProducer:
 
 if __name__ == '__main__':
 
-    redis_connection = {'REDIS_HOSTNAME': 'redis.com',
-                        'REDIS_PORT': 1234,
-                        'username': 'default',
-                        'password': 'word'
-                        }
-    consumers = [RayConsumer.remote(redis_connection) for _ in range(5)]
-    producer = RayProducer.options(name='producer').remote(redis_connection)
+    from secrets_temp import redis_info
+
+    consumers = [RayConsumer.remote(i, redis_info, stream_name='test') for i in range(1)]
+    producer = RayProducer.options(name='producer').remote(redis_info)
 
     try:
         refs = [c.start.remote() for c in consumers]

@@ -42,12 +42,11 @@ class LogIngestorServicer(log_exporter_pb2_grpc.LogExportServiceServicer, Loggin
 
     async def send_to_redis(self):
         while True:
-            async with self.redis_conn.pipeline(transaction=True) as pipe:
-
+            # We don't need atomic transactions
+            async with self.redis_conn.pipeline(transaction=False) as pipe:
                 for _ in range(1000):
                     data = await self.send_queue.get()
                     self.send_queue.task_done()
-                    print(data)
                     await pipe.xadd('test', data)
                 await pipe.execute()
 
@@ -76,4 +75,5 @@ class LogIngestorServicer(log_exporter_pb2_grpc.LogExportServiceServicer, Loggin
                     'service': 'servicetest',
                 }
                 await self.send_queue.put(data)
+                count += 1
         return log_exporter_pb2.ExportResponse(receivedCount=count)
