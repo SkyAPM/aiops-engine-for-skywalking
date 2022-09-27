@@ -11,24 +11,20 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
+from experiments.log.compressor.compare import log_gen
 
-.idea/
-*.iml
-.DS_Store
-*~
-__pycache__
-build/
-dist/
-*.pyc
-**/*.egg-info/
-**/*venv*/
-.vscode/
-engine_protocol/
-assets/datasets
-**/generated/
-# dev engine log
-**/engine.log
-# Ignore dynaconf secret files
-.secrets.*
-# dev secret file
-*secrets*.py
+with open(file='hadoop-28-min.log', mode='w') as f:
+    count = 0
+    temp_log = ''
+    for log in log_gen():
+        if log.startswith('20'):
+            if temp_log:
+                f.write(temp_log)
+                temp_log = ''
+            f.write(log)
+            count += 1
+        else:
+            temp_log += log
+            continue
+        if count > 100000:
+            break

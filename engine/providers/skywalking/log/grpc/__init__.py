@@ -11,24 +11,3 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-
-.idea/
-*.iml
-.DS_Store
-*~
-__pycache__
-build/
-dist/
-*.pyc
-**/*.egg-info/
-**/*venv*/
-.vscode/
-engine_protocol/
-assets/datasets
-**/generated/
-# dev engine log
-**/engine.log
-# Ignore dynaconf secret files
-.secrets.*
-# dev secret file
-*secrets*.py

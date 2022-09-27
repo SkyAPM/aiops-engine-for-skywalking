@@ -12,9 +12,11 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
+"""
+The multiprocessing server uses SO_REUSEPORT to bind to a port and then forks
+This will not work for Windows, we must fallback to asyncio based server on Windows platform
+OSX is not tested, but it should probably work TODO: test on OSX
+"""
 
 import contextlib
 import datetime
@@ -26,9 +28,12 @@ import time
 from concurrent import futures
 
 import grpc
+import ray
 
 from engine.providers.skywalking.log.grpc.proto.generated import log_exporter_pb2_grpc
-from servicer import LogIngestorServicer
+from engine.providers.skywalking.log.grpc.servicers.aio_servicer import LogIngestorServicer
+
+ray.init()
 
 _LOGGER = logging.getLogger(__name__)
 _ONE_DAY = datetime.timedelta(days=1)
@@ -64,7 +69,6 @@ def _reserve_port(bind_strategy):
     sock = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
     # for windows!
     # https://stackoverflow.com/questions/14388706/how-do-so-reuseaddr-and-so-reuseport-differ
-    sock.setsockopt(socket.SOL_SOCKET, socket.SO_EXCLUSIVEADDRUSE, 0)
     sock.setsockopt(socket.SOL_SOCKET, bind_strategy, 1)
     if sock.getsockopt(socket.SOL_SOCKET, bind_strategy) == 0:
         raise RuntimeError("Failed to set SO_REUSEPORT.")

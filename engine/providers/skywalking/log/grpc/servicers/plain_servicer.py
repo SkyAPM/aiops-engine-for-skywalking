@@ -11,41 +11,41 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-import logging
 import time
 import zlib
-from collections.abc import Iterable
-from os import environ
+
+from engine.utils.logging_mixin import LoggingMixin
+
+try:
+    from typing import Iterable
+except ImportError:
+    from collections.abc import Iterable
 
 import grpc
 import yappi
-from redis import Redis
-
-# from engine.ingestors.base import BaseGRPCIngestor
+from redis import asyncio as aioredis  # noqa
 from engine.providers.skywalking.log.grpc.proto.generated import log_exporter_pb2, log_exporter_pb2_grpc
 
 yappi.set_clock_type('WALL')
 
 
-class LogIngestorServicer(log_exporter_pb2_grpc.LogExportServiceServicer):
-    def __init__(self):
-        self.logger = logging.getLogger(__name__)
-        self.channel = grpc.insecure_channel('localhost:50051')  # no need await here
-        self.stub = log_exporter_pb2_grpc.LogExportServiceStub(channel=self.channel)
+class LogIngestorServicer(log_exporter_pb2_grpc.LogExportServiceServicer, LoggingMixin):
+    def __init__(self, redis_info: dict):
+        ...
+        self.redis_info = redis_info
+        self.last_report_time = None
 
-    async def StreamLogExport(self, request_iterator: Iterable[log_exporter_pb2.LogData],
-                              context: grpc.aio.ServicerContext):
+        # self.channel = grpc.insecure_channel('localhost:50051')  # no need await here
+        # self.stub = log_exporter_pb2_grpc.LogExportServiceStub(channel=self.channel)
+        async def get_redis():
+            redis_conn = await aioredis.from_url(redis_info['REDIS_HOSTNAME'] + ':' + redis_info['REDIS_PORT'],
+                                                 retry_on_timeout=True, username=redis_info['username'],
+                                                 password=redis_info['password'])
+            return redis_conn
 
-        self.logger.info('Received subscription request: %s', request_iterator)
-        count = 0
-        print('wtf1')
+        self.redis_conn = await get_redis()
 
-        async for record in self.stub.StreamLogExport(request_iterator):
-            count += 1
-            self.logger.info(f'Received log record Number# {count}: {record}')
-        return log_exporter_pb2.ExportResponse(receivedCount='got message logs batch ')
-
-    async def Subscribe(self, request: log_exporter_pb2.SubscriptionRequest,
+    def AskSubscription(self, request: log_exporter_pb2.SubscriptionRequest,
                         context: grpc.aio.ServicerContext) -> log_exporter_pb2.SubscriptionRequest:
         # request = client ask what do you want?
         self.logger.info('subscription request: %s', request)
@@ -56,25 +56,25 @@ class LogIngestorServicer(log_exporter_pb2_grpc.LogExportServiceServicer):
         # stream-unary (In a single call, the client can transfer data to the server several times,
         # but the server can only return a response once.)
 
-    async def StreamLogExport(self, request_iterator, context):
+    def StreamLogExport(self, request_iterator, context):
         print('ClientStreamingMethod called by client...')
         count = 0
-        hostname = environ.get('REDIS_HOSTNAME', 'redis-11238.c74.us-east-1-4.ec2.cloud.redislabs.com')
-        port = environ.get('REDIS_PORT', 11238)
-        r = Redis(hostname, port, retry_on_timeout=True, username='default', password='skywalking')
+
         with yappi.run():
-            pipeline = r.pipeline()
+            pipeline = self.redis_conn.pipeline()
             batch_size = 0
             last_submit = time.time()
-            async for request in request_iterator:
+            for request in request_iterator:
                 batch_size += 1
                 # replace zlib with zstd compressor (dict)
                 data = {
                     'producer': 'oap',
-                    'log_compressed': zlib.compress(request.rawLog.encode()),  # Just some random data
+                    'log_compressed': zlib.compress(request.body.content.encode()),  # Just some random data
                     'service': 'servicetest',
                 }
                 pipeline.xadd('test', data)
+                if self.last_report_time - time.time() > 5:
+                    pipeline.execute()
                 if batch_size == 1000:
                     # send the pipeline
                     batch_size = 0
@@ -92,6 +92,6 @@ class LogIngestorServicer(log_exporter_pb2_grpc.LogExportServiceServicer):
                     print(count)
                     print(f'received {count} logs')
                     yappi.get_func_stats().print_all()
-                    await exit()
+                    exit()
                 count += 1
-            return log_exporter_pb2.ExportResponse(receivedCount=str(count))
+            return log_exporter_pb2.ExportResponse(receivedCount=count)

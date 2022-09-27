@@ -22,7 +22,7 @@ import time
 import grpc
 
 from engine.providers.skywalking.log.grpc.proto.generated import log_exporter_pb2_grpc, log_exporter_pb2
-from engine.providers.skywalking.log.grpc.proto.generated.log_exporter_pb2 import LogData
+from engine.providers.skywalking.log.grpc.proto.generated.log_exporter_pb2 import LogData, LogDataBody
 from engine.utils.timer import timing
 
 os.environ['PYTHONDEVMODE'] = '1'
@@ -41,8 +41,6 @@ async def run(name) -> None:
         res = await stub.AskSubscription(log_exporter_pb2.SubscriptionRequest())
         print(res)
 
-        # for record in subscription:
-        # log = LogRecord(entityID="0000001", rawLog="hello world")
         async def generator():
             counter = 0
             try:
@@ -50,8 +48,8 @@ async def run(name) -> None:
                     for log in infile:
                         counter += 1
 
-                        yield LogData(entityID=name, rawLog=log)
-                        if counter == 10000:
+                        yield LogData(body=LogDataBody(content=log))
+                        if counter == 7777:
                             break
             except Exception as e:
                 print(e)
@@ -74,7 +72,7 @@ async def main():
     with yappi.run():
         await task1
         # await task2
-    yappi.get_func_stats().print_all()
+    # yappi.get_func_stats().print_all()
 
 
 if __name__ == '__main__':

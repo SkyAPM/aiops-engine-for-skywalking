@@ -22,16 +22,12 @@ your own exporter from any data source.
 import asyncio
 import logging
 import multiprocessing
-import zlib
-from os import environ
 
 import grpc
 import yappi
-from redis import Redis
 
-# from engine.ingestors.base import BaseGRPCIngestor
 from engine.providers.skywalking.log.grpc.proto.generated import log_exporter_pb2_grpc
-from servicer import LogIngestorServicer
+from engine.providers.skywalking.log.grpc.servicers.aio_servicer import LogIngestorServicer
 
 _PROCESS_COUNT = multiprocessing.cpu_count()
 _THREAD_CONCURRENCY = _PROCESS_COUNT
@@ -56,37 +52,6 @@ async def serve() -> None:
     await server.start()
     await server.wait_for_termination()
 
-
-def connect_to_redis():
-    hostname = environ.get('REDIS_HOSTNAME', 'redis-11238.c74.us-east-1-4.ec2.cloud.redislabs.com')
-    port = environ.get('REDIS_PORT', 11238)
-    r = Redis(hostname, port, retry_on_timeout=True, username='default', password='skywalking')
-    return r
-
-
-def send_data(redis_connection, max_messages):
-    count = 0
-    pipeline = redis_connection.pipeline()
-    batch_size = 0
-    while count < max_messages:
-        batch_size += 1
-        data = {
-            'producer': 'oap',
-            'log_compressed': zlib.compress('- 1117838573 2005.06.03 R02-M1-N0-C:J12-U11\
-                 2005-06-03-15.42.53.573391 R02-M1-N0-C:J12-U11 RAS KERNEL INFO\
-                  instruction cache parity error corrected'.encode()),  # Just some random data
-            'service': 'servicetest',
-        }
-        pipeline.xadd('test', data)
-        count += 1
-        if batch_size == 1000:
-            # send the pipeline
-            batch_size = 0
-            resp = pipeline.execute()
-            print(resp)
-    if batch_size != 0:
-        resp = pipeline.execute()
-        print(resp)
 
 
 if __name__ == '__main__':
