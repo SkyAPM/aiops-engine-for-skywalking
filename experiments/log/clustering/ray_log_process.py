@@ -55,7 +55,8 @@ class RayConsumer(object):
                        password=redis_conn['password'])
         try:
             self.r.xgroup_create('test', 'ray_group3', id='0')
-        except redis.exceptions.ResponseError:
+        except redis.exceptions.ResponseError as e:
+            print(e)
             pass
         self.consumer_id = i
         self.group_name = 'ray_group3'

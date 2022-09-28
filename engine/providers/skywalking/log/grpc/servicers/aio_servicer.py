@@ -12,7 +12,10 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 import asyncio
+import os
+import random
 import zlib
+from collections import deque
 
 from engine.utils.logging_mixin import LoggingMixin
 
@@ -31,12 +34,27 @@ from engine.providers.skywalking.log.grpc.proto.generated import log_exporter_pb
 yappi.set_clock_type('WALL')
 
 
+class AsyncDeque(deque):
+    def __init__(self, elements):
+        super().__init__(elements)
+
+    def __aiter__(self):
+        return self
+
+    async def __anext__(self):
+        if not self:
+            raise StopAsyncIteration
+        element = self.popleft()
+        return element
+
+
 class LogIngestorServicer(log_exporter_pb2_grpc.LogExportServiceServicer, LoggingMixin):
     def __init__(self, redis_conn):
         self.redis_conn = redis_conn
         self.last_report_time = None
         self.send_queue = asyncio.Queue()
-
+        self.send_deque = AsyncDeque()
+        self.id = random.randint(1, 999)
         asyncio.create_task(self.send_to_redis())
         # await self.send_queue.join()
 
@@ -44,7 +62,7 @@ class LogIngestorServicer(log_exporter_pb2_grpc.LogExportServiceServicer, Loggin
         while True:
             # We don't need atomic transactions
             async with self.redis_conn.pipeline(transaction=False) as pipe:
-                for _ in range(1000):
+                for _ in range(1000):  # 1000 best
                     data = await self.send_queue.get()
                     self.send_queue.task_done()
                     await pipe.xadd('test', data)
@@ -64,16 +82,21 @@ class LogIngestorServicer(log_exporter_pb2_grpc.LogExportServiceServicer, Loggin
     async def StreamLogExport(self, request_iterator, context):
         print('ClientStreamingMethod called by client...')
         count = 0
+        pid = os.getpid()
         with yappi.run():
             batch_size = 0
             async for request in request_iterator:
                 batch_size += 1
                 # replace zlib with zstd compressor (dict)
                 data = {
-                    'producer': 'oap',
+                    'producer': str(pid),
                     'log_compressed': zlib.compress(request.body.content.encode()),  # Just some random data
                     'service': 'servicetest',
                 }
                 await self.send_queue.put(data)
+                await self.send_deque.append(data)
                 count += 1
+                # if count >= 5:
+                #     return log_exporter_pb2.ExportResponse(receivedCount=count)
+        yappi.get_func_stats().print_all()
         return log_exporter_pb2.ExportResponse(receivedCount=count)

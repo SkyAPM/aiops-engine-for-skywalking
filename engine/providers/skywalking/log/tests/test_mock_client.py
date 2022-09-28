@@ -44,13 +44,19 @@ async def run(name) -> None:
         async def generator():
             counter = 0
             try:
-                with open(file='hadoop-28-min.log') as infile:
-                    for log in infile:
-                        counter += 1
+                # with open(file='hadoop-28-min.log') as infile:
+                #     for log in infile:
+                #         counter += 1
+                #
+                #         yield LogData(body=LogDataBody(content=log))
+                #         if counter == 2000:
+                #             break
+                for i in range(50000):
+                    yield LogData(body=LogDataBody(content="""192.168.198.92 - - [22/Dec/2002:23:08:37 -0400] "GET 
+   / HTTP/1.1" 200 6394 www.yahoo.com 
+   "-" "Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1...)" "-"
+192.168.198.92 - - [22/Dec/2002:23:08:38 -0400] "GET """))
 
-                        yield LogData(body=LogDataBody(content=log))
-                        if counter == 7777:
-                            break
             except Exception as e:
                 print(e)
 
