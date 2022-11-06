@@ -13,24 +13,55 @@
 #  limitations under the License.
 
 
-
 import sys
 
 import pandas as pd
 
 from engine.models.metric.detectors import SpotDetector
+from engine.models.metric.serve.deployment import RayMetricConsumer
+import ray
 
-sys.path.append('../../')
+sys.path.append("../../")
 
 
 def test_detector_uni_dataset():
     df = pd.read_csv(
-        'experiments/metric/data/univarate_dataset.csv', index_col='timestamp'
+        "experiments/metric/data/univarate_dataset.csv", index_col="timestamp"
     )
-    detector = SpotDetector()
+    detector = SpotDetector.remote()
 
     for index, row in df.iterrows():
         timestamp = index
         data = row.value
-        score = detector.fit_score(timestamp=timestamp, data=float(data))
+
+        score = ray.get(
+            detector.fit_score.remote(timestamp=timestamp, data=float(data))
+        )
         assert score is None or 0 <= score <= 1
+
+
+def test_multi_detector_uni_dataset():
+    df = pd.read_csv(
+        "experiments/metric/data/univarate_dataset.csv", index_col="timestamp"
+    )
+
+    for index, row in df.iterrows():
+        timestamp = index
+        data = row.value
+
+        detector = RayMetricConsumer.options(
+            name="cpu.load", lifetime="detached", get_if_exists=True
+        ).remote(SpotDetector())
+
+        score1 = ray.get(
+            detector.run.remote(timestamp=timestamp, data=float(data))
+        )
+
+        detector = RayMetricConsumer.options(
+            name="mem.load", lifetime="detached", get_if_exists=True
+        ).remote(SpotDetector())
+        score2 = ray.get(
+            detector.run.remote(timestamp=timestamp, data=float(data))
+        )
+
+        assert score1 == score2
