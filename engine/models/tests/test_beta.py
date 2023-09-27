@@ -49,7 +49,7 @@ def test_beta_detector_uni_dataset():
         start_time = perf_counter()
         for _, row in df.iterrows():
             timestamp = row.timestamp
-            if type(timestamp) == str:
+            if isinstance(timestamp, str):
                 timestamp = int(datetime.strptime(row.timestamp, "%Y-%m-%d %H:%M:%S").timestamp())
             data = np.array([row.value])
             score = detector.fit_score(X=data, timestamp=timestamp)
@@ -65,7 +65,7 @@ def test_beta_detector_uni_dataset():
         df.loc[df["timestamp"].isin(label_timestamp), "label"] = 1
         label = df["label"].to_numpy().squeeze()
 
-        print(f"Dataset: {dataset}")
+        print(f"\nDataset: {dataset}")
         print(f"Time: {time:.2f}s")
         for metric in [
             PointAwareMetircs(),

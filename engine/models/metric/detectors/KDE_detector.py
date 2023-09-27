@@ -18,7 +18,7 @@ from ..base import BaseDetector
 
 
 class KDEDetector(BaseDetector):
-    def __init__(self, threshold: int = 0.01, **kwargs):
+    def __init__(self, threshold: int = 1e-4, **kwargs):
         """Univariate KDE model. Suit for Latency or other metrics with multimodal distributions.
         Args:
             threshold (float, optional): Threshold for the probability of anomalies, a small float value. Defaults to 1e-4.

@@ -25,6 +25,7 @@ class KSigmaDetector(BaseDetector):
             window_len (int, optional): Length of the window for reference. Defaults to 200.
         """
         super().__init__(data_type="univariate", **kwargs)
+        self.k = k
 
     def fit(self, X: np.ndarray, timestamp: int = None):
         self.window.append(X[0])

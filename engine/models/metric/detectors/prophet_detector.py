@@ -1,3 +1,4 @@
+
 #  Copyright 2023 SkyAPM org
 #
 #  Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,7 +26,6 @@ class ProphetDetector(BaseDetector):
             window_len (int, optional): Length of the window for reference. Defaults to 200.
         """
         super().__init__(data_type="univariate", **kwargs)
-        self.model = Prophet()
 
     def fit(self, X: np.ndarray, timestamp: int = None):
         self.window.append({'ds': pd.to_datetime(timestamp, unit='s'), 'y': X[0]})
@@ -34,12 +34,14 @@ class ProphetDetector(BaseDetector):
 
     def score(self, X: np.ndarray, timestamp: int = None) -> float:
         df = pd.DataFrame.from_records(self.window)
-        self.model.fit(df)
-        future = self.model.make_future_dataframe(periods=1)
-        forecast = self.model.predict(future)
+        model = Prophet()
+        model.fit(df)
+        future = model.make_future_dataframe(periods=1)
+        forecast = model.predict(future)
 
         predicted_value = forecast['yhat'].iloc[-1]
         residual = abs(predicted_value - X[0])
+        print(residual, X[0])
 
-        return residual / X[0]
+        return 1.0 if residual / X[0] > 1.0 else 0.0
 
