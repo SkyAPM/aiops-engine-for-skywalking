@@ -13,7 +13,7 @@
 #  limitations under the License.
 
 
-
+from datetime import datetime
 import sys
 import numpy as np
 
@@ -32,6 +32,8 @@ def test_detector_uni_dataset():
 
     for _, row in df.iterrows():
         timestamp = row.timestamp
+        if isinstance(timestamp, str):
+            timestamp = int(datetime.strptime(row.timestamp, "%Y-%m-%d %H:%M:%S").timestamp())
         data = np.array([row.value])
         score = detector.fit_score(X=data, timestamp=timestamp)
         assert score is None or 0 <= score <= 1

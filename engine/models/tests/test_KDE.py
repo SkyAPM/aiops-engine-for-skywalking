@@ -42,7 +42,7 @@ def test_KDE_detector_uni_dataset():
     for dataset, threshold in dataset_threshold.items():
         file_path = os.path.join(base_path, datasets_dir, dataset)
         df = pd.read_csv(file_path)
-        detector = KDEDetector(window_len=5 * 288, threshold=threshold)
+        detector = KDEDetector(window_len=5 * 288, threshold=threshold, score_first=True)
 
         scores = []
         start_time = perf_counter()

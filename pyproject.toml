@@ -21,6 +21,7 @@ authors = ["Superskyyy <yihaochen@apache.org>"]
 readme = "README.md"
 homepage = "https://skywalking.apache.org/"
 repository = "https://github.com/SkyAPM/aiops-engine-for-skywalking"
+packages = [{include = "engine"}]
 keywords = ["skywalking", "alert", "observability", "aiops", "machine-learning"]
 classifiers = [
     "Development Status :: 1 - Planning",
@@ -52,6 +53,7 @@ pyzstd = "^0.15.3"
 dynaconf = "^3.1.9"
 cachetools = "^5.2.0"
 grpcio-tools = ">=1.42.0"
+prophet = "^1.1.4"
 
 [tool.poetry.dev-dependencies]
 PySnooper = "^1.1.1"
@@ -79,6 +81,10 @@ flake8-2020 = "^1.6.1"
 isort = "^5.10.1"
 # flake8-annotations = "^2.9.1"
 
+
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.4.2"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

@@ -30,7 +30,7 @@ class BaseDetector(ABC):
         detrend: bool = False,
         detrend_len: int = 10,
         data_type: str = "univariate",
-        score_first: bool = True,
+        score_first: bool = False,
     ):
         """Initialize the attributes of the BaseDetector class
 
