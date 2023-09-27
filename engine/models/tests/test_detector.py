@@ -15,6 +15,7 @@
 
 
 import sys
+import numpy as np
 
 import pandas as pd
 
@@ -25,12 +26,12 @@ sys.path.append('../../')
 
 def test_detector_uni_dataset():
     df = pd.read_csv(
-        'experiments/metric/data/univarate_dataset.csv', index_col='timestamp'
+        'experiments/metric/data/univarate_dataset.csv'
     )
     detector = SpotDetector()
 
-    for index, row in df.iterrows():
-        timestamp = index
-        data = row.value
-        score = detector.fit_score(timestamp=timestamp, data=float(data))
+    for _, row in df.iterrows():
+        timestamp = row.timestamp
+        data = np.array([row.value])
+        score = detector.fit_score(X=data, timestamp=timestamp)
         assert score is None or 0 <= score <= 1

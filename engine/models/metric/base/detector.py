@@ -1,3 +1,5 @@
+# This script is from https://github.com/Fengrui-Liu/StreamAD
+
 # Copyright 2022 SkyAPM org
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,56 +17,99 @@
 
 from abc import ABC, abstractmethod
 from collections import deque
-from typing import Union, Literal
+
+import numpy as np
 
 
 class BaseDetector(ABC):
-    """Abstract class for Detector, supporting for customize detectors."""
+    """Abstract class for Detector, supporting for customize detector."""
 
-    def __init__(self, window_len: int = 200, data_type: Literal['univariate', 'multivariate'] = 'univariate'):
-        """Initialization BaseDetector
+    def __init__(
+        self,
+        window_len: int = 50,
+        detrend: bool = False,
+        detrend_len: int = 10,
+        data_type: str = "univariate",
+        score_first: bool = False,
+    ):
+        """Initialize the attributes of the BaseDetector class
+
 
         Args:
-            window_len (int, optional): Window length for observations. Defaults to 200.
-            data_type (Literal['univariate', 'multivariate'], optional): Data type. Defaults to 'univariate'.
+            window_len (int, optional): Length of window for observations. Defaults to 50.
+            detrend (bool, optional): Data is detrended by subtracting the mean. Defaults to True.
+            detrend_len (int, optional): Length of data for reference to detrend. Defaults to 10.
+            data_type (str, optional): Multi/Univariate data type. Defaults to "univariate".
         """
+
         self.data_type = data_type
         self.index = -1
+        self.detrend = detrend
         self.window_len = window_len
+        self.detrend_len = detrend_len
         self.window = deque(maxlen=self.window_len)
+        self.detrend_window = deque(maxlen=self.detrend_len)
+        self.score_first = score_first
 
-    def _check(self, timestamp: str, data: Union[float, int]) -> bool:
-        """Check whether the detectors can handle the data."""
+    def _check(self, X) -> bool:
+        """Check whether the detector can handle the data."""
+        x_shape = X.shape[0]
 
-        assert type(data) in [float, int], 'Please input data with float or int type.'
-        assert type(timestamp)
+        if self.data_type == "univariate":
+            assert x_shape == 1, "The data is not univariate."
+        elif self.data_type == "multivariate":
+            assert x_shape >= 1, "The data is not univariate or multivariate."
 
+        if np.isnan(X).any():
+            return False
         self.index += 1
+        return True
 
-    @abstractmethod
-    def fit(self, data: Union[float, int]):
-        return NotImplementedError
-
-    @abstractmethod
-    def score(self, data: Union[float, int]) -> float:
-        return NotImplementedError
-
-    def fit_score(self, timestamp: str, data: Union[float, int]) -> float:
-        """Fit once observation and return the anomaly score.
+    def _detrend(self, X: np.ndarray) -> np.ndarray:
+        """Detrend the data by subtracting the mean.
 
         Args:
-            timestamp (str): The timestamp of the observation.
-            data (Union[float, int]): The value of the observation.
+            X (np.ndarray): Data of current observation.
 
         Returns:
-            float: Anomaly score.
+            np.ndarray: Detrended data.
         """
 
-        self._check(timestamp, data)
+        self.detrend_window.append(X)
+
+        return X - np.mean(self.detrend_window, axis=0)
+
+    @abstractmethod
+    def fit(self, X: np.ndarray, timestamp: int = None):
+        return NotImplementedError
+
+    @abstractmethod
+    def score(self, X: np.ndarray, timestamp: int = None) -> float:
+        return NotImplementedError
+
+    def fit_score(self, X: np.ndarray, timestamp: int = None) -> float:
+        """Fit one observation and calculate its anomaly score.
+
+        Args:
+            X (np.ndarray): Data of current observation.
+
+        Returns:
+            float: Anomaly score. A high score indicates a high degree of anomaly.
+        """
+
+        check_flag = self._check(X)
+        if not check_flag:
+            return None
+        X = self._detrend(X) if self.detrend else X
+
         if self.index < self.window_len:
-            self.fit(data)
+            self.fit(X, timestamp)
             return None
 
-        score = self.fit(data).score(data)
+        if self.score_first:
+            score = self.score(X, timestamp)
+            self.fit(X, timestamp)
+        else:
+            score = self.fit(X, timestamp).score(X, timestamp)
 
-        return float(score)
+        return float(abs(score))
