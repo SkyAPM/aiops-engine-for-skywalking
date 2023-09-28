@@ -2,10 +2,9 @@
 # This file implements the Drain algorithm for log parsing.
 # Based on https://github.com/logpai/logparser/blob/master/logparser/Drain/Drain.py by LogPAI team
 
-from typing import List, Dict, Sequence
+from typing import Dict, List, Sequence
 
-from cachetools import LRUCache, Cache
-
+from cachetools import Cache, LRUCache
 from simple_profiler import NullProfiler
 
 

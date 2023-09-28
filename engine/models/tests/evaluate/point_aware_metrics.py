@@ -1,6 +1,7 @@
+import numpy as np
+
 from .metrics import BaseMetrics
 from .ts_metrics import TSMetric
-import numpy as np
 
 
 class PointAwareMetircs(BaseMetrics):
@@ -26,12 +27,12 @@ class PointAwareMetircs(BaseMetrics):
         self.y_pred[~select] = 0
 
         metric = TSMetric(
-            metric_option="classic",
+            metric_option='classic',
             beta=self.beta,
             alpha_r=0.0,
-            cardinality="one",
-            bias_p="flat",
-            bias_r="flat",
+            cardinality='one',
+            bias_p='flat',
+            bias_r='flat',
         )
         self.precision, self.recall, self.Fbeta = metric.score(
             self.y_true, self.y_pred

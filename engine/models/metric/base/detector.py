@@ -29,7 +29,7 @@ class BaseDetector(ABC):
         window_len: int = 50,
         detrend: bool = False,
         detrend_len: int = 10,
-        data_type: str = "univariate",
+        data_type: str = 'univariate',
         score_first: bool = False,
     ):
         """Initialize the attributes of the BaseDetector class
@@ -55,10 +55,10 @@ class BaseDetector(ABC):
         """Check whether the detector can handle the data."""
         x_shape = X.shape[0]
 
-        if self.data_type == "univariate":
-            assert x_shape == 1, "The data is not univariate."
-        elif self.data_type == "multivariate":
-            assert x_shape >= 1, "The data is not univariate or multivariate."
+        if self.data_type == 'univariate':
+            assert x_shape == 1, 'The data is not univariate.'
+        elif self.data_type == 'multivariate':
+            assert x_shape >= 1, 'The data is not univariate or multivariate.'
 
         if np.isnan(X).any():
             return False

@@ -1,6 +1,7 @@
+import numpy as np
+
 from .metrics import BaseMetrics
 from .ts_metrics import TSMetric
-import numpy as np
 
 
 class SeriesAwareMetircs(BaseMetrics):
@@ -8,8 +9,8 @@ class SeriesAwareMetircs(BaseMetrics):
         self,
         anomaly_threshold: float = 0.8,
         beta: float = 1.0,
-        bias_p: str = "flat",
-        bias_r: str = "flat",
+        bias_p: str = 'flat',
+        bias_r: str = 'flat',
     ):
         """Time series aware metrics :cite:`DBLP:conf/nips/TatbulLZAG18`
 
@@ -36,10 +37,10 @@ class SeriesAwareMetircs(BaseMetrics):
         self.y_pred[~select] = 0
 
         metric = TSMetric(
-            metric_option="time-series",
+            metric_option='time-series',
             beta=self.beta,
             alpha_r=0.0,
-            cardinality="reciprocal",
+            cardinality='reciprocal',
             bias_p=self.bias_p,
             bias_r=self.bias_r,
         )

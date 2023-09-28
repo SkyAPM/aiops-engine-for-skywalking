@@ -13,13 +13,13 @@
 #  limitations under the License.
 
 
-from datetime import datetime
 import json
 import os
 import sys
+from datetime import datetime
 from time import perf_counter
-import numpy as np
 
+import numpy as np
 import pandas as pd
 
 from engine.models.metric.detectors import BetaDetector
@@ -27,18 +27,18 @@ from engine.models.tests.evaluate.numenta_aware_metrics import NumentaAwareMetir
 from engine.models.tests.evaluate.point_aware_metrics import PointAwareMetircs
 from engine.models.tests.evaluate.series_aware_metrics import SeriesAwareMetircs
 
-sys.path.append("../../")
+sys.path.append('../../')
 
 
 def test_beta_detector_uni_dataset():
-    base_path = "experiments/metric/data"
-    datasets_dir = "realAWSCloudwatch"
+    base_path = 'experiments/metric/data'
+    datasets_dir = 'realAWSCloudwatch'
     dataset_threshold = {
-        "ec2_cpu_utilization_825cc2.csv": 1e-25,
-        "ec2_cpu_utilization_5f5533.csv": 0.15,
-        "ec2_cpu_utilization_ac20cd.csv": 1e-50,
-        "rds_cpu_utilization_cc0c53.csv": 1e-30,
-        "rds_cpu_utilization_e47b3b.csv": 1e-20,
+        'ec2_cpu_utilization_825cc2.csv': 1e-25,
+        'ec2_cpu_utilization_5f5533.csv': 0.15,
+        'ec2_cpu_utilization_ac20cd.csv': 1e-50,
+        'rds_cpu_utilization_cc0c53.csv': 1e-30,
+        'rds_cpu_utilization_e47b3b.csv': 1e-20,
     }
     for dataset, threshold in dataset_threshold.items():
         file_path = os.path.join(base_path, datasets_dir, dataset)
@@ -50,7 +50,7 @@ def test_beta_detector_uni_dataset():
         for _, row in df.iterrows():
             timestamp = row.timestamp
             if isinstance(timestamp, str):
-                timestamp = int(datetime.strptime(row.timestamp, "%Y-%m-%d %H:%M:%S").timestamp())
+                timestamp = int(datetime.strptime(row.timestamp, '%Y-%m-%d %H:%M:%S').timestamp())
             data = np.array([row.value])
             score = detector.fit_score(X=data, timestamp=timestamp)
             assert score is None or 0 <= score <= 1
@@ -58,15 +58,15 @@ def test_beta_detector_uni_dataset():
 
         time = perf_counter() - start_time
 
-        labels = json.load(open(os.path.join(base_path, "labels/combined_labels.json")))
-        key = datasets_dir + "/" + dataset
+        labels = json.load(open(os.path.join(base_path, 'labels/combined_labels.json')))
+        key = f'{datasets_dir}/{dataset}'
         label_timestamp = labels[key]
-        df["label"] = 0
-        df.loc[df["timestamp"].isin(label_timestamp), "label"] = 1
-        label = df["label"].to_numpy().squeeze()
+        df['label'] = 0
+        df.loc[df['timestamp'].isin(label_timestamp), 'label'] = 1
+        label = df['label'].to_numpy().squeeze()
 
-        print(f"\nDataset: {dataset}")
-        print(f"Time: {time:.2f}s")
+        print(f'\nDataset: {dataset}')
+        print(f'Time: {time:.2f}s')
         for metric in [
             PointAwareMetircs(),
             SeriesAwareMetircs(),
@@ -74,4 +74,4 @@ def test_beta_detector_uni_dataset():
         ]:
             precision, recall, F1 = metric.evaluate(label, scores)
             print(metric.__class__.__name__)
-            print(f"Precision: {precision:.2f}, Recall: {recall:.2f}, F1: {F1:.2f}")
+            print(f'Precision: {precision:.2f}, Recall: {recall:.2f}, F1: {F1:.2f}')

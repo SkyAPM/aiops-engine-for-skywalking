@@ -13,13 +13,13 @@
 #  limitations under the License.
 
 
-from datetime import datetime
 import json
 import os
 import sys
+from datetime import datetime
 from time import perf_counter
-import numpy as np
 
+import numpy as np
 import pandas as pd
 
 from engine.models.metric.detectors import KSigmaDetector
@@ -27,14 +27,14 @@ from engine.models.tests.evaluate.numenta_aware_metrics import NumentaAwareMetir
 from engine.models.tests.evaluate.point_aware_metrics import PointAwareMetircs
 from engine.models.tests.evaluate.series_aware_metrics import SeriesAwareMetircs
 
-sys.path.append("../../")
+sys.path.append('../../')
 
 
 def test_ksigma_detector_uni_dataset():
-    base_path = "experiments/metric/data"
-    datasets_dir = "realAWSCloudwatch"
-    dataset = "elb_request_count_8c0756.csv"
-    
+    base_path = 'experiments/metric/data'
+    datasets_dir = 'realAWSCloudwatch'
+    dataset = 'elb_request_count_8c0756.csv'
+
     file_path = os.path.join(base_path, datasets_dir, dataset)
     df = pd.read_csv(file_path)
     detector = KSigmaDetector(window_len=2 * 288, k=7)
@@ -45,7 +45,7 @@ def test_ksigma_detector_uni_dataset():
         timestamp = row.timestamp
         if isinstance(timestamp, str):
             timestamp = int(
-                datetime.strptime(row.timestamp, "%Y-%m-%d %H:%M:%S").timestamp()
+                datetime.strptime(row.timestamp, '%Y-%m-%d %H:%M:%S').timestamp()
             )
         data = np.array([row.value])
         score = detector.fit_score(X=data, timestamp=timestamp)
@@ -54,15 +54,15 @@ def test_ksigma_detector_uni_dataset():
 
     time = perf_counter() - start_time
 
-    labels = json.load(open(os.path.join(base_path, "labels/combined_labels.json")))
-    key = datasets_dir + "/" + dataset
+    labels = json.load(open(os.path.join(base_path, 'labels/combined_labels.json')))
+    key = f'{datasets_dir}/{dataset}'
     label_timestamp = labels[key]
-    df["label"] = 0
-    df.loc[df["timestamp"].isin(label_timestamp), "label"] = 1
-    label = df["label"].to_numpy().squeeze()
+    df['label'] = 0
+    df.loc[df['timestamp'].isin(label_timestamp), 'label'] = 1
+    label = df['label'].to_numpy().squeeze()
 
-    print(f"\nDataset: {dataset}")
-    print(f"Time: {time:.2f}s")
+    print(f'\nDataset: {dataset}')
+    print(f'Time: {time:.2f}s')
     for metric in [
         PointAwareMetircs(),
         SeriesAwareMetircs(),
@@ -70,4 +70,4 @@ def test_ksigma_detector_uni_dataset():
     ]:
         precision, recall, F1 = metric.evaluate(label, scores)
         print(metric.__class__.__name__)
-        print(f"Precision: {precision:.2f}, Recall: {recall:.2f}, F1: {F1:.2f}")
+        print(f'Precision: {precision:.2f}, Recall: {recall:.2f}, F1: {F1:.2f}')

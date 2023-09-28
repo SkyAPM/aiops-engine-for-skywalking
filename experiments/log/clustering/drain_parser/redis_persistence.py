@@ -1,7 +1,6 @@
 # SPDX-License-Identifier: MIT
 
 import redis
-
 from drain_parser.persistence_handler import PersistenceHandler
 
 

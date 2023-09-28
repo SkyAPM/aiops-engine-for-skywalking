@@ -15,8 +15,7 @@
 import zlib
 from sys import getsizeof
 
-from pyzstd import RichMemZstdCompressor, ZstdCompressor
-from pyzstd import train_dict
+from pyzstd import RichMemZstdCompressor, ZstdCompressor, train_dict
 
 from engine.utils.timer import timing
 

@@ -14,20 +14,15 @@
 
 import logging
 import sys
-
 import zlib
-
 from os.path import dirname
 
 import ray
-
 import redis
-
-from redis import Redis
-
 from drain_parser.masking import LogMasker
 from drain_parser.template_miner import TemplateMiner
 from drain_parser.template_miner_config import TemplateMinerConfig
+from redis import Redis
 
 ray.init()
 
@@ -36,7 +31,7 @@ logging.basicConfig(stream=sys.stdout, level=logging.INFO, format='%(message)s')
 
 persistence_type = 'REDIS'
 config = TemplateMinerConfig()
-config.load(dirname(__file__) + '/drain3.ini')
+config.load(f'{dirname(__file__)}/drain3.ini')
 
 log_masker = LogMasker(config.masking_instructions, config.mask_prefix, config.mask_suffix)
 template_miner = TemplateMiner(config=config)

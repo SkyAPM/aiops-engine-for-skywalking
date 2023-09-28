@@ -1,4 +1,3 @@
-
 #  Copyright 2023 SkyAPM org
 #
 #  Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,9 +13,11 @@
 #  limitations under the License.
 
 import numpy as np
-from prophet import Prophet
 import pandas as pd
-from ..base import BaseDetector
+from prophet import Prophet
+
+from engine.models.metric.base.detector import BaseDetector
+
 
 class ProphetDetector(BaseDetector):
     def __init__(self, **kwargs):
@@ -25,7 +26,7 @@ class ProphetDetector(BaseDetector):
             threshold (float, optional): Threshold for the probability of anomalies, a small float value. Defaults to 1e-4.
             window_len (int, optional): Length of the window for reference. Defaults to 200.
         """
-        super().__init__(data_type="univariate", **kwargs)
+        super().__init__(data_type='univariate', **kwargs)
 
     def fit(self, X: np.ndarray, timestamp: int = None):
         self.window.append({'ds': pd.to_datetime(timestamp, unit='s'), 'y': X[0]})
@@ -44,4 +45,3 @@ class ProphetDetector(BaseDetector):
         print(residual, X[0])
 
         return 1.0 if residual / X[0] > 1.0 else 0.0
-

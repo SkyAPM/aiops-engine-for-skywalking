@@ -14,7 +14,8 @@
 
 import numpy as np
 from scipy.stats import binom
-from ..base import BaseDetector
+
+from engine.models.metric.base.detector import BaseDetector
 
 
 class BinomialDetector(BaseDetector):
@@ -24,7 +25,7 @@ class BinomialDetector(BaseDetector):
             threshold (float, optional): Threshold for the probability of anomalies, a small float value. Defaults to 1e-4.
             window_len (int, optional): Length of the window for reference. Defaults to 200.
         """
-        super().__init__(data_type="univariate", **kwargs)
+        super().__init__(data_type='univariate', **kwargs)
         self.threshold = threshold
 
     def fit(self, X: np.ndarray, timestamp: int = None):

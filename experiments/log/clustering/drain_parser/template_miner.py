@@ -5,15 +5,14 @@ import logging
 import re
 import time
 import zlib
-from typing import Optional, List, NamedTuple
+from typing import List, NamedTuple, Optional
 
 import jsonpickle
-from cachetools import LRUCache, cachedmethod, Cache
-
+from cachetools import Cache, LRUCache, cachedmethod
 from drain_parser.drain import Drain, LogCluster
 from drain_parser.masking import LogMasker
 from drain_parser.persistence_handler import PersistenceHandler
-from drain_parser.simple_profiler import Profiler, NullProfiler, SimpleProfiler
+from drain_parser.simple_profiler import NullProfiler, Profiler, SimpleProfiler
 from drain_parser.template_miner_config import TemplateMinerConfig
 
 logger = logging.getLogger(__name__)
@@ -56,7 +55,7 @@ class TemplateMiner:            # noqa
 
         self.persistence_handler = persistence_handler
 
-        param_str = self.config.mask_prefix + '*' + self.config.mask_suffix
+        param_str = f'{self.config.mask_prefix}*{self.config.mask_suffix}'
         self.drain = Drain(
             sim_th=self.config.drain_sim_th,
             depth=self.config.drain_depth,
@@ -306,7 +305,7 @@ class TemplateMiner:            # noqa
         param_name_counter = [0]
 
         def get_next_param_name():
-            param_group_name = 'p_' + str(param_name_counter[0])
+            param_group_name = f'p_{str(param_name_counter[0])}'
             param_name_counter[0] += 1
             return param_group_name
 
@@ -377,5 +376,5 @@ class TemplateMiner:            # noqa
 
         # match also messages with multiple spaces or other whitespace chars between tokens
         template_regex = re.sub(r'\\ ', r'\\s+', template_regex)
-        template_regex = '^' + template_regex + '$'
+        template_regex = f'^{template_regex}$'
         return template_regex, param_group_name_to_mask_name

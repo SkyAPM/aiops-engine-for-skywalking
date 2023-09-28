@@ -13,18 +13,18 @@
 #  limitations under the License.
 
 import numpy as np
-from scipy.stats import beta
-from ..base import BaseDetector
+
+from engine.models.metric.base.detector import BaseDetector
 
 
 class KSigmaDetector(BaseDetector):
     def __init__(self, k: int = 3, **kwargs):
-        """Univariate gaussian model. 
+        """Univariate gaussian model.
         Args:
             k (int, optional): K times the standard deviation (sigma) to consider outliter. Defaults to 3.
             window_len (int, optional): Length of the window for reference. Defaults to 200.
         """
-        super().__init__(data_type="univariate", **kwargs)
+        super().__init__(data_type='univariate', **kwargs)
         self.k = k
 
     def fit(self, X: np.ndarray, timestamp: int = None):
@@ -36,4 +36,4 @@ class KSigmaDetector(BaseDetector):
         mean = np.mean(self.window)
         std = np.std(self.window)
 
-        return 1.0 if abs(mean -  X[0]) > std * self.k else 0.0
+        return 1.0 if abs(mean - X[0]) > std * self.k else 0.0

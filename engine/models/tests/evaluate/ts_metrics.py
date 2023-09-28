@@ -6,20 +6,20 @@ import numpy as np
 class TSMetric:
     def __init__(
         self,
-        metric_option="classic",
+        metric_option='classic',
         beta=1.0,
         alpha_r=0.0,
-        cardinality="one",
-        bias_p="flat",
-        bias_r="flat",
+        cardinality='one',
+        bias_p='flat',
+        bias_r='flat',
     ):
 
         assert (alpha_r >= 0) & (alpha_r <= 1)
-        assert metric_option in ["classic", "time-series", "numenta"]
+        assert metric_option in ['classic', 'time-series', 'numenta']
         assert beta > 0
-        assert cardinality in ["one", "reciprocal", "udf_gamma"]
-        assert bias_p in ["flat", "front", "middle", "back"]
-        assert bias_r in ["flat", "front", "middle", "back"]
+        assert cardinality in ['one', 'reciprocal', 'udf_gamma']
+        assert bias_p in ['flat', 'front', 'middle', 'back']
+        assert bias_r in ['flat', 'front', 'middle', 'back']
 
         self.metric_option = metric_option
         self.beta = beta
@@ -36,14 +36,14 @@ class TSMetric:
         return 1.0
 
     def _gamma_select(self, gamma, overlap, task_type):
-        if gamma == "one":
+        if gamma == 'one':
             return 1.0
-        elif gamma == "reciprocal":
+        elif gamma == 'reciprocal':
             if overlap > 1:
                 return 1.0 / overlap
             else:
                 return 1.0
-        elif gamma == "udf_gamma_def":
+        elif gamma == 'udf_gamma_def':
             if overlap > 1:
                 return 1.0 / self._udf_gamma(overlap, task_type)
             else:
@@ -56,7 +56,7 @@ class TSMetric:
         elif task_type == 1:
             return self._gamma_select(self.cardinality, overlap, task_type)
         else:
-            raise Exception("invalid argument in gamma function")
+            raise Exception('invalid argument in gamma function')
 
     def _compute_omega_reward(self, r1, r2, overlap_count, task_type):
         if r1[1] < r2[0] or r1[0] > r2[1]:
@@ -91,24 +91,24 @@ class TSMetric:
         elif task_type == 1:
             return self._delta_select(self.bias_r, t, anomaly_length, task_type)
         else:
-            raise Exception("Invalid task type in delta function")
+            raise Exception('Invalid task type in delta function')
 
     def _delta_select(self, delta, t, anomaly_length, task_type):
-        if delta == "flat":
+        if delta == 'flat':
             return 1.0
-        elif delta == "front":
+        elif delta == 'front':
             return float(anomaly_length - t + 1.0)
-        elif delta == "middle":
+        elif delta == 'middle':
             if t <= anomaly_length / 2.0:
                 return float(t)
             else:
                 return float(anomaly_length - t + 1.0)
-        elif delta == "back":
+        elif delta == 'back':
             return float(t)
-        elif delta == "udf_delta":
+        elif delta == 'udf_delta':
             return self._udf_delta(t, anomaly_length, task_type)
         else:
-            raise Exception("Invalid positional bias value")
+            raise Exception('Invalid positional bias value')
 
     def _udf_delta(self, t, anomaly_length, task_type):
         """
@@ -185,13 +185,13 @@ class TSMetric:
 
         assert len(values_real) == len(values_pred)
 
-        if self.metric_option == "classic":
+        if self.metric_option == 'classic':
             real_anomalies = np.argwhere(values_real == 1).repeat(2, axis=1)
             predicted_anomalies = np.argwhere(values_pred == 1).repeat(
                 2, axis=1
             )
 
-        elif self.metric_option == "time-series":
+        elif self.metric_option == 'time-series':
             predicted_anomalies_ = np.argwhere(values_pred == 1).ravel()
             predicted_anomalies_shift_forward = self._shift(
                 predicted_anomalies_, 1, fill_value=predicted_anomalies_[0]
@@ -241,7 +241,7 @@ class TSMetric:
                 ]
             )
 
-        elif self.metric_option == "numenta":
+        elif self.metric_option == 'numenta':
             predicted_anomalies = np.argwhere(values_pred == 1).repeat(
                 2, axis=1
             )

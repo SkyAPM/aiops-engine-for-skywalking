@@ -13,14 +13,16 @@
 #  limitations under the License.
 
 
-from ..base import BaseDetector
-import numpy as np
-from math import log
-from scipy.optimize import minimize
-from collections import deque
 import heapq
+from collections import deque
+from math import log
 
-np.seterr(divide="ignore", invalid="ignore")
+import numpy as np
+from scipy.optimize import minimize
+
+from engine.models.metric.base.detector import BaseDetector
+
+np.seterr(divide='ignore', invalid='ignore')
 
 
 class SpotDetector(BaseDetector):
@@ -45,7 +47,7 @@ class SpotDetector(BaseDetector):
             window_len (int, optional): Length of the window for reference. Defaults to 200.
         """
 
-        super().__init__(data_type="univariate", **kwargs)
+        super().__init__(data_type='univariate', **kwargs)
 
         self.prob = prob
         self.deviance_ratio = deviance_ratio
@@ -56,19 +58,19 @@ class SpotDetector(BaseDetector):
         # self.window_len = self.window_len - self.back_mean_len
         assert (
             self.window_len > 0
-        ), "window_len is too small, default value is 200"
+        ), 'window_len is too small, default value is 200'
 
         self.num_threshold = {
-            "up": num_threshold_up,
-            "down": num_threshold_down,
+            'up': num_threshold_up,
+            'down': num_threshold_down,
         }
 
-        nonedict = {"up": None, "down": None}
+        nonedict = {'up': None, 'down': None}
 
         self.extreme_quantile = dict.copy(nonedict)
         self.init_threshold = dict.copy(nonedict)
         self.peaks = dict.copy(nonedict)
-        self.history_peaks = {"up": [], "down": []}
+        self.history_peaks = {'up': [], 'down': []}
         # self.peaks = {'up':deque(maxlen=20),'down':deque(maxlen=20)}
         self.gamma = dict.copy(nonedict)
         self.sigma = dict.copy(nonedict)
@@ -128,20 +130,20 @@ class SpotDetector(BaseDetector):
         d = a + epsilon
         e = -epsilon
 
-        left_zeros = self._rootsFinder(
+        left_zeros = self._roots_finder(
             lambda t: w(self.peaks[side], t),
             lambda t: jac_w(self.peaks[side], t),
             (d, e) if d < e else (e, d),
             n_points,
-            "regular",
+            'regular',
         )
 
-        right_zeros = self._rootsFinder(
+        right_zeros = self._roots_finder(
             lambda t: w(self.peaks[side], t),
             lambda t: jac_w(self.peaks[side], t),
             (b, c) if b < c else (c, b),
             n_points,
-            "regular",
+            'regular',
         )
 
         # all the possible roots
@@ -166,7 +168,7 @@ class SpotDetector(BaseDetector):
 
         return gamma_best, sigma_best, ll_best
 
-    def _rootsFinder(self, fun, jac, bounds, npoints, method):
+    def _roots_finder(self, fun, jac, bounds, npoints, method):
         """
         Find possible roots of a scalar function
 
@@ -188,16 +190,16 @@ class SpotDetector(BaseDetector):
         numpy.array
             possible roots of the function
         """
-        if method == "regular":
+        if method == 'regular':
             step = (bounds[1] - bounds[0]) / (npoints + 1)
             try:
                 X0 = np.arange(bounds[0] + step, bounds[1], step)
-            except:
+            except Exception:
                 X0 = np.random.uniform(bounds[0], bounds[1], npoints)
-        elif method == "random":
+        elif method == 'random':
             X0 = np.random.uniform(bounds[0], bounds[1], npoints)
 
-        def objFun(X, f, jac):
+        def obj_fun(X, f, jac):
             g = 0
             j = np.zeros(X.shape)
             i = 0
@@ -209,9 +211,9 @@ class SpotDetector(BaseDetector):
             return g, j
 
         opt = minimize(
-            lambda X: objFun(X, fun, jac),
+            lambda X: obj_fun(X, fun, jac),
             X0,
-            method="L-BFGS-B",
+            method='L-BFGS-B',
             jac=True,
             bounds=[bounds] * len(X0),
         )
@@ -251,37 +253,37 @@ class SpotDetector(BaseDetector):
         return L
 
     def _quantile(self, side, gamma, sigma):
-        if side == "up":
+        if side == 'up':
             r = self.window_len * self.prob / self.num_threshold[side]
             # r = 1000 * self.prob
 
             if gamma != 0:
-                return self.init_threshold["up"] + (sigma / gamma) * (
+                return self.init_threshold['up'] + (sigma / gamma) * (
                     pow(r, -gamma) - 1
                 )
             else:
-                return self.init_threshold["up"] - sigma * log(r)
-        elif side == "down":
+                return self.init_threshold['up'] - sigma * log(r)
+        elif side == 'down':
             r = self.window_len * self.prob / self.num_threshold[side]
             # r = 1000 * self.prob
 
             if gamma != 0:
-                return self.init_threshold["down"] - (sigma / gamma) * (
+                return self.init_threshold['down'] - (sigma / gamma) * (
                     pow(r, -gamma) - 1
                 )
             else:
-                return self.init_threshold["down"] + sigma * log(r)
+                return self.init_threshold['down'] + sigma * log(r)
         else:
-            raise ValueError("The side is not right")
+            raise ValueError('The side is not right')
 
     def _init_drift(self, verbose=False):
-        for side in ["up", "down"]:
+        for side in ['up', 'down']:
             self._update_one_side(side)
 
         return self
 
     def _update_one_side(self, side: str):
-        if side == "up":
+        if side == 'up':
             candidates = (
                 list(self.window) + self.history_peaks[side]
                 if self.global_memory
@@ -296,7 +298,7 @@ class SpotDetector(BaseDetector):
             self.peaks[side] = np.array(self.history_peaks[side]) - np.array(
                 self.init_threshold[side]
             )
-        elif side == "down":
+        elif side == 'down':
             candidates = (
                 list(self.window) + self.history_peaks[side]
                 if self.global_memory
@@ -357,11 +359,11 @@ class SpotDetector(BaseDetector):
             ):
                 return self
 
-            if self.normal_X > self.init_threshold["up"]:
-                self._update_one_side("up")
+            if self.normal_X > self.init_threshold['up']:
+                self._update_one_side('up')
 
-            elif self.normal_X < self.init_threshold["down"]:
-                self._update_one_side("down")
+            elif self.normal_X < self.init_threshold['down']:
+                self._update_one_side('down')
 
         return self
 
@@ -384,13 +386,13 @@ class SpotDetector(BaseDetector):
             score = 0.0
 
         elif (
-            self.normal_X > self.extreme_quantile["up"]
-            or self.normal_X < self.extreme_quantile["down"]
+            self.normal_X > self.extreme_quantile['up']
+            or self.normal_X < self.extreme_quantile['down']
         ):
             score = 1.0
 
-        elif self.normal_X > self.init_threshold["up"]:
-            side = "up"
+        elif self.normal_X > self.init_threshold['up']:
+            side = 'up'
             score = np.divide(
                 self.normal_X - self.init_threshold[side],
                 (self.extreme_quantile[side] - self.init_threshold[side]),
@@ -400,8 +402,8 @@ class SpotDetector(BaseDetector):
                 ),
             )
 
-        elif self.normal_X < self.init_threshold["down"]:
-            side = "down"
+        elif self.normal_X < self.init_threshold['down']:
+            side = 'down'
             score = np.divide(
                 self.init_threshold[side] - self.normal_X,
                 (self.init_threshold[side] - self.extreme_quantile[side]),

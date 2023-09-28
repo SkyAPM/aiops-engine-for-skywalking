@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+
 import numpy as np
 
 
@@ -15,7 +16,7 @@ class BaseMetrics(ABC):
     @abstractmethod
     def evaluate(self, y_true: np.ndarray, y_pred: np.ndarray):
         y_pred = np.array(y_pred)
-        y_pred[y_pred == None] = 0
+        y_pred[y_pred == None] = 0  # noqa: E711
         self.y_true = y_true.astype(int)
         self.y_pred = y_pred.astype(int)
         return

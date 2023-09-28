@@ -14,7 +14,8 @@
 
 import numpy as np
 from scipy.stats import beta
-from ..base import BaseDetector
+
+from engine.models.metric.base.detector import BaseDetector
 
 
 class BetaDetector(BaseDetector):
@@ -24,7 +25,7 @@ class BetaDetector(BaseDetector):
             threshold (float, optional): Threshold for the probability of anomalies, a small float value. Defaults to 1e-4.
             window_len (int, optional): Length of the window for reference. Defaults to 200.
         """
-        super().__init__(data_type="univariate", **kwargs)
+        super().__init__(data_type='univariate', **kwargs)
         self.threshold = threshold
 
     def fit(self, X: np.ndarray, timestamp: int = None):
@@ -34,7 +35,7 @@ class BetaDetector(BaseDetector):
 
     def score(self, X: np.ndarray, timestamp: int = None) -> float:
         alpha_hat, beta_hat, _, _ = beta.fit(self.window, floc=0, fscale=1)
-        
+
         density = beta.pdf(X[0] / 100, alpha_hat, beta_hat)
 
         return 1.0 if density < self.threshold else 0.0

@@ -12,13 +12,13 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from .spot_detector import SpotDetector
 from .beta_detector import BetaDetector
 from .binomial_detector import BinomialDetector
 from .KDE_detector import KDEDetector
 from .ksigma_detector import KSigmaDetector
 from .poisson_detector import PoissonDetector
 from .prophet_detector import ProphetDetector
+from .spot_detector import SpotDetector
 
 __all__ = ['SpotDetector',
            'BetaDetector',
