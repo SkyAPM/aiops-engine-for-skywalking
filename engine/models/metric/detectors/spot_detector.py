@@ -96,7 +96,7 @@ class SpotDetector(BaseDetector):
             ) * (1 - vs)
             jac_vs = np.divide(
                 1, t, out=np.array(1 / epsilon), where=t != 0
-            ) * (-vs + np.mean(1 / s**2))
+            ) * (-vs + np.mean(1 / s ** 2))
             return us * jac_vs + vs * jac_us
 
         self.peaks[side][self.peaks[side] == 0] = epsilon
@@ -117,7 +117,7 @@ class SpotDetector(BaseDetector):
         )
         c = 2 * np.divide(
             y_mean - y_min,
-            y_min**2,
+            y_min ** 2,
             out=np.array((y_mean - y_min) / epsilon + epsilon),
             where=y_min != 0,
         )
@@ -198,7 +198,7 @@ class SpotDetector(BaseDetector):
             i = 0
             for x in x_sampled:
                 fx = f(x)
-                g = g + fx**2
+                g = g + fx ** 2
                 j[i] = 2 * fx * jac(x)
                 i = i + 1
             return g, j
@@ -312,7 +312,6 @@ class SpotDetector(BaseDetector):
 
     def fit(self, data: Union[float, int]):
 
-
         self.back_mean_window.append(data)
 
         if self.index >= self.back_mean_len:
@@ -333,7 +332,10 @@ class SpotDetector(BaseDetector):
             if (
                 abs(
                     np.divide(
-                        data - last_data, last_data, np.array(data), where=last_data != 0
+                        data - last_data,
+                        last_data,
+                        np.array(data),
+                        where=last_data != 0,
                     )
                 )
                 < self.deviance_ratio
@@ -351,7 +353,6 @@ class SpotDetector(BaseDetector):
 
     def score(self, data: Union[float, int]) -> float:
 
-
         last_data = (
             self.window[-2]
             if self.back_mean_len == 0
@@ -359,7 +360,14 @@ class SpotDetector(BaseDetector):
         )
 
         if (
-            abs(np.divide(data - last_data, last_data, np.array(data), where=last_data != 0))
+            abs(
+                np.divide(
+                    data - last_data,
+                    last_data,
+                    np.array(data),
+                    where=last_data != 0,
+                )
+            )
             < self.deviance_ratio
         ):
             score = 0.0

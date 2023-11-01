@@ -67,7 +67,7 @@ OSPP 2022 and GSOC 2022 student research outcomes.
 
 **Metric Anomaly Detection and Visualizations**
 
-TBD - Soon to be added
+![img.png](docs/static/metric-detector.png)
 
 ### Roadmap
 
