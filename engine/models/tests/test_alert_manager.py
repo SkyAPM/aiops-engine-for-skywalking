@@ -20,7 +20,7 @@ sys.path.append('../../')
 
 def test_alert():
 
-    manager = AlertManager(tolearance=5, least_alert=2)
+    manager = AlertManager(tolerance=5, least_alert=2)
 
     for idx, i in enumerate([0, 0, 0, 1, 1, 0, 1, 0, 0, 0, 0, 0, 1, 1, 0, 1]):
         score = manager.get_alert(score=i, timestamp=str(idx), data=i)

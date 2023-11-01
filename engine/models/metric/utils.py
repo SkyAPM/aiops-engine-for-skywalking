@@ -17,8 +17,8 @@ from typing import Union
 
 
 class AlertManager:
-    def __init__(self, tolearance: int = 5, least_alert: int = 2) -> None:
-        self.tolearance = tolearance
+    def __init__(self, tolerance: int = 5, least_alert: int = 2) -> None:
+        self.tolerance = tolerance
         self.least_alert = least_alert
         self.alert_cnt = 0
         self.non_alert_cnt = 0
@@ -43,7 +43,7 @@ class AlertManager:
 
         else:
             self.non_alert_cnt += 1
-            if self.non_alert_cnt > self.tolearance:
+            if self.non_alert_cnt > self.tolerance:
                 # Notification to alert
                 # print('Alert End')
                 self.alert_cnt = 0
